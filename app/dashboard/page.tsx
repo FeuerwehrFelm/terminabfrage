@@ -23,6 +23,13 @@ type Profile = {
   ortswehr: string | null;
 };
 
+type Teilnehmer = {
+  id: string;
+  vorname: string;
+  name: string;
+  ortswehr: string;
+};
+
 type Termin = {
   id: string;
   titel: string;
@@ -33,7 +40,8 @@ type Termin = {
 
 type Rueckmeldung = {
   termin_id: string;
-  profile_id: string;
+  profile_id: string | null;
+  teilnehmer_id: string | null;
   status: string;
   rolle: "pa_traeger" | "maschinist" | "beide" | null;
 };
@@ -42,6 +50,7 @@ export default function Dashboard() {
   const [userEmail, setUserEmail] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [alleProfile, setAlleProfile] = useState<Profile[]>([]);
+  const [alleTeilnehmer, setAlleTeilnehmer] = useState<Teilnehmer[]>([]);
   const [termine, setTermine] = useState<Termin[]>([]);
   const [rueckmeldungen, setRueckmeldungen] = useState<Rueckmeldung[]>([]);
   const [rollenProTermin, setRollenProTermin] = useState<
@@ -52,6 +61,10 @@ export default function Dashboard() {
   const profilesById = useMemo(() => {
     return Object.fromEntries(alleProfile.map((p) => [p.id, p]));
   }, [alleProfile]);
+
+  const teilnehmerById = useMemo(() => {
+    return Object.fromEntries(alleTeilnehmer.map((t) => [t.id, t]));
+  }, [alleTeilnehmer]);
 
   const fullName = (p?: Profile | null) =>
     p ? `${p.vorname || ""} ${p.name || ""}`.trim() || "Unbekannt" : "Unbekannt";
@@ -110,7 +123,7 @@ export default function Dashboard() {
 
       const { data: rueckData, error: rueckError } = await supabase
         .from("rueckmeldungen")
-        .select("termin_id, profile_id, status, rolle");
+        .select("termin_id, profile_id, teilnehmer_id, status, rolle");
 
       if (rueckError) {
         alert("Rückmeldungen konnten nicht geladen werden: " + rueckError.message);
@@ -118,6 +131,11 @@ export default function Dashboard() {
         return;
       }
 
+      const { data: teilnehmerData } = await supabase
+        .from("teilnehmer")
+        .select("id, vorname, name, ortswehr");
+
+      setAlleTeilnehmer((teilnehmerData as Teilnehmer[]) || []);
       setRueckmeldungen((rueckData as Rueckmeldung[]) || []);
       setLoading(false);
     };
@@ -157,6 +175,7 @@ export default function Dashboard() {
         {
           termin_id: terminId,
           profile_id: profile.id,
+          teilnehmer_id: null,
           status,
           rolle,
         },
@@ -451,7 +470,10 @@ export default function Dashboard() {
                     ) : (
                       <div className="space-y-2">
                         {alleAntworten(t.id).map((r, i) => {
-                          const person = profilesById[r.profile_id];
+                          const person = r.profile_id ? profilesById[r.profile_id] : null;
+                          const teilnehmer = r.teilnehmer_id
+                            ? teilnehmerById[r.teilnehmer_id]
+                            : null;
 
                           return (
                             <div
@@ -461,9 +483,11 @@ export default function Dashboard() {
                               <div className="flex items-center justify-between gap-3">
                                 <div>
                                   <div className="font-medium text-white">
-                                    {fullName(person)}{" "}
+                                    {teilnehmer
+                                      ? `${teilnehmer.vorname} ${teilnehmer.name}`
+                                      : fullName(person)}{" "}
                                     <span className="text-sm text-slate-400">
-                                      ({person?.ortswehr || "-"})
+                                      ({teilnehmer?.ortswehr || person?.ortswehr || "-"})
                                     </span>
                                   </div>
                                 </div>

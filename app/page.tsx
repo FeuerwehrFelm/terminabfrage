@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Flame, LogIn } from "lucide-react";
+import { Flame, LogIn, Users } from "lucide-react";
 
 export default function Home() {
   return (
@@ -22,23 +22,26 @@ export default function Home() {
         </h1>
 
         <p className="mt-4 max-w-xl text-slate-400 text-lg">
-          Digitale Rückmeldung zu Diensten und Terminen deiner Ortswehr.
-          Schnell, übersichtlich und für alle sichtbar.
+          Rückmeldung zu Diensten und Terminen ohne Passwort für die Mannschaft.
+          Admins verwalten Termine im geschützten Bereich.
         </p>
 
         {/* Buttons */}
         <div className="mt-8 flex flex-col sm:flex-row gap-4">
 
-          <Link href="/login">
+          <Link href="/teilnahme">
             <button className="flex items-center gap-2 rounded-2xl bg-yellow-300 px-6 py-3 font-semibold text-[#081120] hover:bg-yellow-200 transition">
-              <LogIn className="h-4 w-4" />
-              Login
+              <Users className="h-4 w-4" />
+              Zur Teilnahme
             </button>
           </Link>
 
-          <Link href="/dashboard">
+          <Link href="/login">
             <button className="rounded-2xl border border-yellow-300/30 px-6 py-3 font-semibold text-white hover:bg-[#16243b] transition">
-              Dashboard öffnen
+              <span className="inline-flex items-center gap-2">
+                <LogIn className="h-4 w-4" />
+                Admin Login
+              </span>
             </button>
           </Link>
 
