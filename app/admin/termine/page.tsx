@@ -18,10 +18,18 @@ type Termin = {
   hinweis: string | null;
 };
 
+type Rueckmeldung = {
+  termin_id: string;
+  status: string;
+};
+
 export default function AdminTerminePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [termine, setTermine] = useState<Termin[]>([]);
+  const [statsByTermin, setStatsByTermin] = useState<
+    Record<string, { ja: number; nein: number; unsicher: number }>
+  >({});
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [titel, setTitel] = useState("");
@@ -48,6 +56,32 @@ export default function AdminTerminePage() {
     }
 
     setTermine((data as Termin[]) || []);
+  };
+
+  const loadRueckmeldungsStats = async () => {
+    const { data, error } = await supabase
+      .from("rueckmeldungen")
+      .select("termin_id, status");
+
+    if (error) {
+      alert("Rückmeldungen konnten nicht geladen werden: " + error.message);
+      return;
+    }
+
+    const rows = (data as Rueckmeldung[]) || [];
+    const map: Record<string, { ja: number; nein: number; unsicher: number }> = {};
+
+    rows.forEach((r) => {
+      if (!map[r.termin_id]) {
+        map[r.termin_id] = { ja: 0, nein: 0, unsicher: 0 };
+      }
+
+      if (r.status === "ja") map[r.termin_id].ja += 1;
+      if (r.status === "nein") map[r.termin_id].nein += 1;
+      if (r.status === "unsicher") map[r.termin_id].unsicher += 1;
+    });
+
+    setStatsByTermin(map);
   };
 
   useEffect(() => {
@@ -80,6 +114,7 @@ export default function AdminTerminePage() {
 
       setProfile(data);
       await loadTermine();
+      await loadRueckmeldungsStats();
       setLoading(false);
     };
 
@@ -113,6 +148,7 @@ export default function AdminTerminePage() {
     setUhrzeit("");
     setHinweis("");
     await loadTermine();
+    await loadRueckmeldungsStats();
   };
 
   const handleDeleteTermin = async (termin: Termin) => {
@@ -144,6 +180,11 @@ export default function AdminTerminePage() {
     }
 
     setTermine((prev) => prev.filter((t) => t.id !== termin.id));
+    setStatsByTermin((prev) => {
+      const next = { ...prev };
+      delete next[termin.id];
+      return next;
+    });
   };
 
   if (loading) {
@@ -240,6 +281,17 @@ export default function AdminTerminePage() {
                     <div className="font-semibold text-white">{termin.titel}</div>
                     <div className="mt-1 text-sm text-slate-400">
                       {termin.datum} {formatUhrzeit(termin.uhrzeit)}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                      <span className="rounded-full border border-green-400/30 bg-green-500/10 px-2 py-1 text-green-300">
+                        Ja: {statsByTermin[termin.id]?.ja || 0}
+                      </span>
+                      <span className="rounded-full border border-red-400/30 bg-red-500/10 px-2 py-1 text-red-300">
+                        Nein: {statsByTermin[termin.id]?.nein || 0}
+                      </span>
+                      <span className="rounded-full border border-yellow-300/30 bg-yellow-300/10 px-2 py-1 text-yellow-300">
+                        Unsicher: {statsByTermin[termin.id]?.unsicher || 0}
+                      </span>
                     </div>
                   </div>
 
