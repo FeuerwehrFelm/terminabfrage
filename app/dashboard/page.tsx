@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import {
   CheckCircle2,
@@ -36,20 +36,19 @@ type Rueckmeldung = {
   termin_id: string;
   profile_id: string;
   status: string;
-  profiles?: {
-    name: string;
-    ortswehr: string | null;
-    pa_traeger: boolean;
-    maschinist: boolean;
-  }[] | null;
 };
 
 export default function Dashboard() {
   const [userEmail, setUserEmail] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [alleProfile, setAlleProfile] = useState<Profile[]>([]);
   const [termine, setTermine] = useState<Termin[]>([]);
   const [rueckmeldungen, setRueckmeldungen] = useState<Rueckmeldung[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const profilesById = useMemo(() => {
+    return Object.fromEntries(alleProfile.map((p) => [p.id, p]));
+  }, [alleProfile]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -64,19 +63,31 @@ export default function Dashboard() {
 
       setUserEmail(user.email || "");
 
-      const { data: profileData, error: profileError } = await supabase
+      const { data: meinProfil, error: meinProfilError } = await supabase
         .from("profiles")
         .select("id, name, ortswehr, pa_traeger, maschinist")
         .eq("id", user.id)
         .single();
 
-      if (profileError || !profileData) {
+      if (meinProfilError || !meinProfil) {
         alert("Profil konnte nicht geladen werden.");
         setLoading(false);
         return;
       }
 
-      setProfile(profileData);
+      setProfile(meinProfil);
+
+      const { data: profileListe, error: profileListeError } = await supabase
+        .from("profiles")
+        .select("id, name, ortswehr, pa_traeger, maschinist");
+
+      if (profileListeError) {
+        alert("Profile konnten nicht geladen werden: " + profileListeError.message);
+        setLoading(false);
+        return;
+      }
+
+      setAlleProfile(profileListe || []);
 
       const { data: termineData, error: termineError } = await supabase
         .from("termine")
@@ -93,17 +104,7 @@ export default function Dashboard() {
 
       const { data: rueckData, error: rueckError } = await supabase
         .from("rueckmeldungen")
-        .select(`
-          termin_id,
-          profile_id,
-          status,
-          profiles (
-            name,
-            ortswehr,
-            pa_traeger,
-            maschinist
-          )
-        `);
+        .select("termin_id, profile_id, status");
 
       if (rueckError) {
         alert("Rückmeldungen konnten nicht geladen werden: " + rueckError.message);
@@ -146,14 +147,6 @@ export default function Dashboard() {
           termin_id: terminId,
           profile_id: profile.id,
           status,
-          profiles: [
-            {
-              name: profile.name,
-              ortswehr: profile.ortswehr,
-              pa_traeger: profile.pa_traeger,
-              maschinist: profile.maschinist,
-            },
-          ],
         },
       ];
     });
@@ -362,46 +355,50 @@ export default function Dashboard() {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        {alleAntworten(t.id).map((r, i) => (
-                          <div
-                            key={i}
-                            className="rounded-2xl border border-yellow-300/10 bg-[#111c2f] px-4 py-3"
-                          >
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <div className="font-medium text-white">
-                                  {r.profiles?.[0]?.name || "Unbekannt"}
+                        {alleAntworten(t.id).map((r, i) => {
+                          const person = profilesById[r.profile_id];
+
+                          return (
+                            <div
+                              key={i}
+                              className="rounded-2xl border border-yellow-300/10 bg-[#111c2f] px-4 py-3"
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <div className="font-medium text-white">
+                                    {person?.name || "Unbekannt"}
+                                  </div>
+                                  <div className="mt-1 text-sm text-slate-400">
+                                    {person?.ortswehr || "-"}
+                                  </div>
                                 </div>
-                                <div className="mt-1 text-sm text-slate-400">
-                                  {r.profiles?.[0]?.ortswehr || "-"}
-                                </div>
+
+                                <Badge
+                                  tone={
+                                    r.status === "ja"
+                                      ? "green"
+                                      : r.status === "nein"
+                                      ? "red"
+                                      : "yellow"
+                                  }
+                                >
+                                  {r.status}
+                                </Badge>
                               </div>
 
-                              <Badge
-                                tone={
-                                  r.status === "ja"
-                                    ? "green"
-                                    : r.status === "nein"
-                                    ? "red"
-                                    : "yellow"
-                                }
-                              >
-                                {r.status}
-                              </Badge>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                <QualiMini
+                                  active={!!person?.pa_traeger}
+                                  label="PA-Träger"
+                                />
+                                <QualiMini
+                                  active={!!person?.maschinist}
+                                  label="Maschinist"
+                                />
+                              </div>
                             </div>
-
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              <QualiMini
-                                active={!!r.profiles?.[0]?.pa_traeger}
-                                label="PA-Träger"
-                              />
-                              <QualiMini
-                                active={!!r.profiles?.[0]?.maschinist}
-                                label="Maschinist"
-                              />
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
