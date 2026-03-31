@@ -212,6 +212,7 @@ export default function TeilnahmePage() {
     const { error } = await supabase.from("rueckmeldungen").upsert(
       {
         termin_id: terminId,
+        profile_id: null,
         teilnehmer_id: teilnehmer.id,
         teilnehmer_vorname: teilnehmer.vorname,
         teilnehmer_name: teilnehmer.name,
