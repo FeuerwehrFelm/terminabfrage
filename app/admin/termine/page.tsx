@@ -116,6 +116,17 @@ export default function AdminTerminePage() {
 
     setDeletingId(termin.id);
 
+    const { error: rueckError } = await supabase
+      .from("rueckmeldungen")
+      .delete()
+      .eq("termin_id", termin.id);
+
+    if (rueckError) {
+      setDeletingId(null);
+      alert("Fehler beim Löschen der Rückmeldungen: " + rueckError.message);
+      return;
+    }
+
     const { error } = await supabase.from("termine").delete().eq("id", termin.id);
 
     setDeletingId(null);

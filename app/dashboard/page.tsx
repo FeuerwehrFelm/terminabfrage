@@ -42,6 +42,9 @@ type Rueckmeldung = {
   termin_id: string;
   profile_id: string | null;
   teilnehmer_id: string | null;
+  teilnehmer_vorname: string | null;
+  teilnehmer_name: string | null;
+  teilnehmer_ortswehr: string | null;
   status: string;
   rolle: "pa_traeger" | "maschinist" | "beide" | null;
 };
@@ -89,7 +92,9 @@ export default function Dashboard() {
         .order("datum", { ascending: true }),
       supabase
         .from("rueckmeldungen")
-        .select("termin_id, profile_id, teilnehmer_id, status, rolle"),
+        .select(
+          "termin_id, profile_id, teilnehmer_id, teilnehmer_vorname, teilnehmer_name, teilnehmer_ortswehr, status, rolle"
+        ),
       supabase.from("teilnehmer").select("id, vorname, name, ortswehr"),
     ]);
 
@@ -172,6 +177,9 @@ export default function Dashboard() {
       termin_id: terminId,
       profile_id: actor.profileId,
       teilnehmer_id: actor.teilnehmerId,
+      teilnehmer_vorname: mode === "teilnehmer" ? teilnehmerSession?.vorname || null : null,
+      teilnehmer_name: mode === "teilnehmer" ? teilnehmerSession?.name || null : null,
+      teilnehmer_ortswehr: mode === "teilnehmer" ? teilnehmerSession?.ortswehr || null : null,
       status,
       rolle,
     };
@@ -527,9 +535,14 @@ export default function Dashboard() {
                                   <div className="font-medium text-white">
                                     {teilnehmer
                                       ? `${teilnehmer.vorname} ${teilnehmer.name}`
+                                      : r.teilnehmer_vorname || r.teilnehmer_name
+                                      ? `${r.teilnehmer_vorname || ""} ${r.teilnehmer_name || ""}`.trim()
                                       : fullName(person)}{" "}
                                     <span className="text-sm text-slate-400">
-                                      ({teilnehmer?.ortswehr || person?.ortswehr || "-"})
+                                      ({teilnehmer?.ortswehr ||
+                                        r.teilnehmer_ortswehr ||
+                                        person?.ortswehr ||
+                                        "-"})
                                     </span>
                                   </div>
                                 </div>

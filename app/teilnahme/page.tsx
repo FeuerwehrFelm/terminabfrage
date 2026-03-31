@@ -37,6 +37,9 @@ type Rueckmeldung = {
   termin_id: string;
   profile_id: string | null;
   teilnehmer_id: string | null;
+  teilnehmer_vorname: string | null;
+  teilnehmer_name: string | null;
+  teilnehmer_ortswehr: string | null;
   status: string;
   rolle: "pa_traeger" | "maschinist" | "beide" | null;
 };
@@ -95,7 +98,9 @@ export default function TeilnahmePage() {
         .order("datum", { ascending: true }),
       supabase
         .from("rueckmeldungen")
-        .select("termin_id, profile_id, teilnehmer_id, status, rolle"),
+        .select(
+          "termin_id, profile_id, teilnehmer_id, teilnehmer_vorname, teilnehmer_name, teilnehmer_ortswehr, status, rolle"
+        ),
       supabase.from("profiles").select("id, vorname, name, ortswehr"),
       supabase.from("teilnehmer").select("id, vorname, name, ortswehr"),
     ]);
@@ -194,6 +199,9 @@ export default function TeilnahmePage() {
       {
         termin_id: terminId,
         teilnehmer_id: teilnehmer.id,
+        teilnehmer_vorname: teilnehmer.vorname,
+        teilnehmer_name: teilnehmer.name,
+        teilnehmer_ortswehr: teilnehmer.ortswehr,
         status,
         rolle,
       },
@@ -218,6 +226,9 @@ export default function TeilnahmePage() {
           termin_id: terminId,
           teilnehmer_id: teilnehmer.id,
           profile_id: null,
+          teilnehmer_vorname: teilnehmer.vorname,
+          teilnehmer_name: teilnehmer.name,
+          teilnehmer_ortswehr: teilnehmer.ortswehr,
           status,
           rolle,
         },
@@ -539,9 +550,13 @@ export default function TeilnahmePage() {
                               const tp = r.teilnehmer_id ? teilnehmerById[r.teilnehmer_id] : null;
                               const anzeigeName = tp
                                 ? nameAusTeilnehmer(tp)
+                                : r.teilnehmer_vorname || r.teilnehmer_name
+                                ? `${r.teilnehmer_vorname || ""} ${r.teilnehmer_name || ""}`.trim()
                                 : nameAusProfil(p);
                               const anzeigeOrtswehr = tp
                                 ? ortswehrText(tp.ortswehr)
+                                : r.teilnehmer_ortswehr
+                                ? ortswehrText(r.teilnehmer_ortswehr)
                                 : ortswehrText(p?.ortswehr);
 
                               return (
