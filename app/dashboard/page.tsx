@@ -163,32 +163,65 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return <div className="p-10 text-white bg-black min-h-screen">Lade Dashboard...</div>;
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="rounded-2xl border border-red-500/30 bg-zinc-900/70 px-6 py-4 shadow-[0_0_30px_rgba(255,0,0,0.2)]">
+          Lade Dashboard...
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-950 via-black to-red-900 text-white p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
-          <h1 className="text-3xl font-bold text-red-400">🔥 Terminabfrage Gemeindefeuerwehr Felm</h1>
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      <div className="absolute top-[-120px] left-[-120px] h-[320px] w-[320px] rounded-full bg-red-700/20 blur-[110px]" />
+      <div className="absolute bottom-[-140px] right-[-120px] h-[320px] w-[320px] rounded-full bg-orange-500/10 blur-[120px]" />
+
+      <div className="relative z-10 mx-auto max-w-6xl p-6 md:p-10">
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="rounded-3xl border border-red-500/30 bg-zinc-900/70 px-6 py-5 shadow-[0_0_40px_rgba(255,0,0,0.18)] backdrop-blur-xl">
+            <div className="mb-2 text-5xl drop-shadow-[0_0_10px_rgba(255,80,0,0.8)]">
+              🔥
+            </div>
+            <h1 className="text-3xl font-bold tracking-wide text-red-400">
+              Terminabfrage
+            </h1>
+            <p className="mt-2 text-sm text-zinc-400">
+              Rückmeldungen zu euren Terminen im Überblick
+            </p>
+          </div>
+
           <button
             onClick={handleLogout}
-            className="bg-zinc-800 hover:bg-zinc-700 border border-red-800 px-4 py-2 rounded"
+            className="rounded-xl border border-red-500/40 bg-zinc-900/70 px-5 py-3 font-medium text-white shadow-[0_0_20px_rgba(255,0,0,0.12)] transition hover:border-red-400 hover:bg-zinc-800"
           >
             Logout
           </button>
         </div>
-    
-        <div className="mb-6 p-4 bg-black/40 rounded-lg border border-red-800">
-          <p>Eingeloggt als: {userEmail}</p>
-          <p>Name: {profile?.name}</p>
-          <p>Rolle: {profile?.role}</p>
+
+        <div className="mb-8 grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-red-500/30 bg-zinc-900/70 p-5 shadow-[0_0_30px_rgba(255,0,0,0.14)] backdrop-blur-xl">
+            <div className="text-sm text-zinc-400">E-Mail</div>
+            <div className="mt-1 font-semibold text-white">{userEmail}</div>
+          </div>
+          <div className="rounded-2xl border border-orange-500/30 bg-zinc-900/70 p-5 shadow-[0_0_30px_rgba(255,120,0,0.12)] backdrop-blur-xl">
+            <div className="text-sm text-zinc-400">Name</div>
+            <div className="mt-1 font-semibold text-white">{profile?.name}</div>
+          </div>
+          <div className="rounded-2xl border border-yellow-500/30 bg-zinc-900/70 p-5 shadow-[0_0_30px_rgba(255,180,0,0.1)] backdrop-blur-xl">
+            <div className="text-sm text-zinc-400">Rolle</div>
+            <div className="mt-1 font-semibold text-white">{profile?.role}</div>
+          </div>
         </div>
 
-        <h2 className="text-2xl font-semibold mb-4 text-red-300">Termine</h2>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold text-red-300">Termine</h2>
+        </div>
 
         {termine.length === 0 ? (
-          <p>Keine Termine vorhanden.</p>
+          <div className="rounded-3xl border border-red-500/25 bg-zinc-900/60 p-8 text-zinc-400 shadow-[0_0_30px_rgba(255,0,0,0.1)] backdrop-blur-xl">
+            Keine Termine vorhanden.
+          </div>
         ) : (
           <div className="space-y-6">
             {termine.map((termin) => {
@@ -197,74 +230,96 @@ export default function Dashboard() {
               return (
                 <div
                   key={termin.id}
-                  className="bg-black/50 border border-red-800 rounded-lg p-4 shadow-lg"
+                  className="rounded-3xl border border-red-500/30 bg-zinc-900/70 p-6 shadow-[0_0_40px_rgba(255,0,0,0.14)] backdrop-blur-xl"
                 >
-                  <h3 className="text-xl font-bold text-red-400">{termin.titel}</h3>
+                  <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <h3 className="text-2xl font-bold text-red-400">
+                        {termin.titel}
+                      </h3>
+                      <p className="mt-2 text-sm text-zinc-400">
+                        {termin.datum} {termin.uhrzeit || ""}
+                      </p>
+                      {termin.hinweis && (
+                        <p className="mt-3 text-zinc-300">{termin.hinweis}</p>
+                      )}
+                    </div>
 
-                  <p className="text-sm text-gray-300">
-                    {termin.datum} {termin.uhrzeit || ""}
-                  </p>
-
-                  {termin.hinweis && (
-                    <p className="mt-2 text-gray-400">{termin.hinweis}</p>
-                  )}
-
-                  <div className="mt-3 flex gap-3 text-sm flex-wrap">
-                    <span className="bg-green-800 px-2 py-1 rounded">
-                      Ja: {stats.ja}
-                    </span>
-                    <span className="bg-red-800 px-2 py-1 rounded">
-                      Nein: {stats.nein}
-                    </span>
-                    <span className="bg-yellow-700 text-black px-2 py-1 rounded">
-                      Unsicher: {stats.unsicher}
-                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full border border-green-500/30 bg-green-500/10 px-3 py-1 text-sm text-green-300">
+                        Ja: {stats.ja}
+                      </span>
+                      <span className="rounded-full border border-red-500/30 bg-red-500/10 px-3 py-1 text-sm text-red-300">
+                        Nein: {stats.nein}
+                      </span>
+                      <span className="rounded-full border border-yellow-500/30 bg-yellow-500/10 px-3 py-1 text-sm text-yellow-300">
+                        Unsicher: {stats.unsicher}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="mt-4 flex gap-2 flex-wrap">
+                  <div className="mb-5 flex flex-wrap gap-3">
                     <button
                       onClick={() => setAntwort(termin.id, "ja")}
-                      className="bg-green-600 hover:bg-green-500 px-3 py-1 rounded"
+                      className="rounded-xl border border-green-500/40 bg-green-500/15 px-4 py-2 font-medium text-green-200 transition hover:bg-green-500/25"
                     >
                       Ja
                     </button>
-
                     <button
                       onClick={() => setAntwort(termin.id, "nein")}
-                      className="bg-red-700 hover:bg-red-600 px-3 py-1 rounded"
+                      className="rounded-xl border border-red-500/40 bg-red-500/15 px-4 py-2 font-medium text-red-200 transition hover:bg-red-500/25"
                     >
                       Nein
                     </button>
-
                     <button
                       onClick={() => setAntwort(termin.id, "unsicher")}
-                      className="bg-yellow-600 hover:bg-yellow-500 px-3 py-1 rounded text-black"
+                      className="rounded-xl border border-yellow-500/40 bg-yellow-500/15 px-4 py-2 font-medium text-yellow-200 transition hover:bg-yellow-500/25"
                     >
                       Unsicher
                     </button>
                   </div>
 
-                  <div className="mt-4 text-sm">
-                    <strong>Deine Antwort:</strong> {eigeneAntwort(termin.id)}
+                  <div className="mb-5 rounded-2xl border border-orange-500/20 bg-black/25 p-4">
+                    <span className="text-sm text-zinc-400">Deine Antwort</span>
+                    <div className="mt-1 text-lg font-semibold text-white">
+                      {eigeneAntwort(termin.id)}
+                    </div>
                   </div>
 
-                  <div className="mt-4">
-                    <strong>Alle Rückmeldungen:</strong>
+                  <div>
+                    <div className="mb-3 text-lg font-semibold text-orange-300">
+                      Alle Rückmeldungen
+                    </div>
 
                     {alleAntwortenZumTermin(termin.id).length === 0 ? (
-                      <p className="text-gray-400 mt-2">Noch keine Rückmeldungen</p>
+                      <div className="rounded-2xl border border-red-500/20 bg-black/20 p-4 text-zinc-400">
+                        Noch keine Rückmeldungen
+                      </div>
                     ) : (
-                      <ul className="mt-2 space-y-1">
+                      <div className="space-y-2">
                         {alleAntwortenZumTermin(termin.id).map((r, index) => (
-                          <li
+                          <div
                             key={`${r.termin_id}-${r.profile_id}-${index}`}
-                            className="flex justify-between bg-black/30 px-3 py-2 rounded"
+                            className="flex items-center justify-between rounded-2xl border border-red-500/20 bg-black/25 px-4 py-3"
                           >
-                            <span>{r.profiles?.[0]?.name || "Unbekannt"}</span>
-                            <span className="font-semibold">{r.status}</span>
-                          </li>
+                            <span className="font-medium text-white">
+                              {r.profiles?.[0]?.name || "Unbekannt"}
+                            </span>
+                            <span
+                              className={[
+                                "rounded-full px-3 py-1 text-sm font-semibold border",
+                                r.status === "ja"
+                                  ? "border-green-500/30 bg-green-500/10 text-green-300"
+                                  : r.status === "nein"
+                                  ? "border-red-500/30 bg-red-500/10 text-red-300"
+                                  : "border-yellow-500/30 bg-yellow-500/10 text-yellow-300",
+                              ].join(" ")}
+                            >
+                              {r.status}
+                            </span>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     )}
                   </div>
                 </div>
