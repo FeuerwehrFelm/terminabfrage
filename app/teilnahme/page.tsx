@@ -90,6 +90,23 @@ export default function TeilnahmePage() {
   const nameAusTeilnehmer = (t?: Teilnehmer | null) =>
     t ? `${t.vorname || ""} ${t.name || ""}`.trim() || "Unbekannt" : "Unbekannt";
 
+  const formatTerminDatum = (datum: string) => {
+    const [y, m, d] = datum.split("-").map(Number);
+    if (!y || !m || !d) return datum;
+    const date = new Date(y, m - 1, d);
+    return new Intl.DateTimeFormat("de-DE", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(date);
+  };
+
+  const formatTerminUhrzeit = (uhrzeit: string | null) => {
+    if (!uhrzeit) return "Uhrzeit folgt";
+    return `${uhrzeit} Uhr`;
+  };
+
   const ladeDaten = async () => {
     const [termineRes, rueckRes, profileRes, teilnehmerRes] = await Promise.all([
       supabase
@@ -309,13 +326,6 @@ export default function TeilnahmePage() {
     window.location.href = "/dashboard";
   };
 
-  const handlePersonWechsel = () => {
-    localStorage.removeItem(SESSION_KEY);
-    setTeilnehmer(null);
-    setCode("");
-    setFehler("");
-  };
-
   const alleAntworten = (terminId: string) =>
     rueckmeldungen.filter((r) => r.termin_id === terminId);
 
@@ -419,19 +429,13 @@ export default function TeilnahmePage() {
           </div>
         ) : (
           <>
-            <div className="rounded-2xl border border-yellow-300/20 bg-[#0d1728]/90 p-4 md:p-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="rounded-2xl border border-yellow-300/20 bg-[#0d1728]/90 p-4 md:p-5">
               <div>
                 <div className="text-sm text-slate-400">Angemeldet als</div>
                 <div className="font-semibold text-white">
                   {nameAusTeilnehmer(teilnehmer)} ({ortswehrText(teilnehmer.ortswehr)})
                 </div>
               </div>
-              <button
-                onClick={handlePersonWechsel}
-                className="rounded-xl border border-yellow-300/20 bg-[#111c2f] px-4 py-2 text-sm font-medium hover:bg-[#16243b]"
-              >
-                Person wechseln
-              </button>
             </div>
 
             {fehler && (
@@ -460,9 +464,14 @@ export default function TeilnahmePage() {
                           <h2 className="text-xl md:text-2xl font-bold text-yellow-300">
                             {t.titel}
                           </h2>
-                          <p className="mt-1 text-sm text-slate-400">
-                            {t.datum} {t.uhrzeit || ""}
-                          </p>
+                          <div className="mt-2">
+                            <div className="text-base md:text-lg font-semibold text-slate-200">
+                              {formatTerminDatum(t.datum)}
+                            </div>
+                            <div className="text-sm md:text-base text-slate-300">
+                              {formatTerminUhrzeit(t.uhrzeit)}
+                            </div>
+                          </div>
                           {t.hinweis && <p className="mt-2 text-slate-300">{t.hinweis}</p>}
                         </div>
                         <div className="flex flex-wrap gap-2">
