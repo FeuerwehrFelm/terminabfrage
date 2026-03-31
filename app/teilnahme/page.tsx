@@ -49,6 +49,7 @@ type TeilnahmeSession = {
 };
 
 const SESSION_KEY = "teilnahme_session_v1";
+const ORTSWEHREN = ["Felm", "Rathmannsdorf-Felmerholz"] as const;
 
 export default function TeilnahmePage() {
   const [loading, setLoading] = useState(true);
@@ -61,7 +62,6 @@ export default function TeilnahmePage() {
   const [name, setName] = useState("");
   const [ortswehr, setOrtswehr] = useState("");
   const [code, setCode] = useState("");
-  const [ortswehrOptionen, setOrtswehrOptionen] = useState<string[]>([]);
 
   const [termine, setTermine] = useState<Termin[]>([]);
   const [rueckmeldungen, setRueckmeldungen] = useState<Rueckmeldung[]>([]);
@@ -86,31 +86,6 @@ export default function TeilnahmePage() {
 
   const nameAusTeilnehmer = (t?: Teilnehmer | null) =>
     t ? `${t.vorname || ""} ${t.name || ""}`.trim() || "Unbekannt" : "Unbekannt";
-
-  const ladeOrtswehren = async () => {
-    const [ausProfiles, ausTeilnehmer] = await Promise.all([
-      supabase.from("profiles").select("ortswehr"),
-      supabase.from("teilnehmer").select("ortswehr"),
-    ]);
-
-    const sammlung = new Set<string>();
-
-    if (!ausProfiles.error && ausProfiles.data) {
-      ausProfiles.data.forEach((e) => {
-        const value = e.ortswehr?.trim();
-        if (value) sammlung.add(value);
-      });
-    }
-
-    if (!ausTeilnehmer.error && ausTeilnehmer.data) {
-      ausTeilnehmer.data.forEach((e) => {
-        const value = e.ortswehr?.trim();
-        if (value) sammlung.add(value);
-      });
-    }
-
-    setOrtswehrOptionen(Array.from(sammlung).sort((a, b) => a.localeCompare(b)));
-  };
 
   const ladeDaten = async () => {
     const [termineRes, rueckRes, profileRes, teilnehmerRes] = await Promise.all([
@@ -144,8 +119,6 @@ export default function TeilnahmePage() {
 
   useEffect(() => {
     const init = async () => {
-      await ladeOrtswehren();
-
       const raw = localStorage.getItem(SESSION_KEY);
       if (raw) {
         try {
@@ -398,22 +371,20 @@ export default function TeilnahmePage() {
               </Field>
 
               <Field label="Ortswehr" icon={<MapPin className="h-4 w-4 text-yellow-300" />}>
-                <input
-                  list="ortswehr-optionen-teilnahme"
+                <select
                   value={ortswehr}
                   onChange={(e) => setOrtswehr(e.target.value)}
-                  placeholder={
-                    ortswehrOptionen.length > 0
-                      ? "Ortswehr wählen oder tippen"
-                      : "Ortswehr eingeben"
-                  }
-                  className="w-full bg-transparent text-white outline-none placeholder:text-slate-500"
-                />
-                <datalist id="ortswehr-optionen-teilnahme">
-                  {ortswehrOptionen.map((option) => (
-                    <option key={option} value={option} />
+                  className="w-full bg-transparent text-white outline-none"
+                >
+                  <option value="" className="bg-[#111c2f] text-slate-400">
+                    Bitte wählen...
+                  </option>
+                  {ORTSWEHREN.map((option) => (
+                    <option key={option} value={option} className="bg-[#111c2f] text-white">
+                      {option}
+                    </option>
                   ))}
-                </datalist>
+                </select>
               </Field>
 
               <Field label="Teilnahme-Code" icon={<LogIn className="h-4 w-4 text-yellow-300" />}>

@@ -11,6 +11,8 @@ type Profile = {
   ortswehr: string | null;
 };
 
+const ORTSWEHREN = ["Felm", "Rathmannsdorf-Felmerholz"] as const;
+
 export default function ProfilPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -19,7 +21,6 @@ export default function ProfilPage() {
   const [vorname, setVorname] = useState("");
   const [name, setName] = useState("");
   const [ortswehr, setOrtswehr] = useState("");
-  const [ortswehrOptionen, setOrtswehrOptionen] = useState<string[]>([]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -50,21 +51,6 @@ export default function ProfilPage() {
       setVorname(p.vorname || "");
       setName(p.name || "");
       setOrtswehr(p.ortswehr || "");
-
-      const { data: ortswehren, error: ortswehrError } = await supabase
-        .from("profiles")
-        .select("ortswehr");
-
-      if (!ortswehrError && ortswehren) {
-        const optionen = Array.from(
-          new Set(
-            ortswehren
-              .map((o) => o.ortswehr?.trim())
-              .filter((o): o is string => !!o)
-          )
-        );
-        setOrtswehrOptionen(optionen);
-      }
 
       setLoading(false);
     };
@@ -158,20 +144,20 @@ export default function ProfilPage() {
             label="Ortswehr"
             icon={<MapPin className="h-4 w-4 text-yellow-300" />}
           >
-            <input
-              list="ortswehr-optionen-profil"
+            <select
               value={ortswehr}
               onChange={(e) => setOrtswehr(e.target.value)}
-              placeholder={
-                ortswehrOptionen.length > 0 ? "Ortswehr wählen oder tippen" : "Ortswehr eingeben"
-              }
-              className="w-full bg-transparent text-white outline-none placeholder:text-slate-500"
-            />
-            <datalist id="ortswehr-optionen-profil">
-              {ortswehrOptionen.map((option) => (
-                <option key={option} value={option} />
+              className="w-full bg-transparent text-white outline-none"
+            >
+              <option value="" className="bg-[#111c2f] text-slate-400">
+                Bitte wählen...
+              </option>
+              {ORTSWEHREN.map((option) => (
+                <option key={option} value={option} className="bg-[#111c2f] text-white">
+                  {option}
+                </option>
               ))}
-            </datalist>
+            </select>
           </Field>
 
           <button
