@@ -29,6 +29,13 @@ export default function AdminTerminePage() {
   const [uhrzeit, setUhrzeit] = useState("");
   const [hinweis, setHinweis] = useState("");
 
+  const formatUhrzeit = (uhrzeit: string | null) => {
+    if (!uhrzeit) return "";
+    const [hh, mm] = uhrzeit.split(":");
+    if (!hh || !mm) return uhrzeit;
+    return `${hh}:${mm}`;
+  };
+
   const loadTermine = async () => {
     const { data, error } = await supabase
       .from("termine")
@@ -232,7 +239,7 @@ export default function AdminTerminePage() {
                   <div>
                     <div className="font-semibold text-white">{termin.titel}</div>
                     <div className="mt-1 text-sm text-slate-400">
-                      {termin.datum} {termin.uhrzeit || ""}
+                      {termin.datum} {formatUhrzeit(termin.uhrzeit)}
                     </div>
                   </div>
 

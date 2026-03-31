@@ -104,7 +104,9 @@ export default function TeilnahmePage() {
 
   const formatTerminUhrzeit = (uhrzeit: string | null) => {
     if (!uhrzeit) return "Uhrzeit folgt";
-    return `${uhrzeit} Uhr`;
+    const [hh, mm] = uhrzeit.split(":");
+    if (!hh || !mm) return `${uhrzeit} Uhr`;
+    return `${hh}:${mm} Uhr`;
   };
 
   const ladeDaten = async () => {

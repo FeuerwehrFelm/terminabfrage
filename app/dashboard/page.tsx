@@ -83,6 +83,13 @@ export default function Dashboard() {
   const fullName = (p?: Profile | null) =>
     p ? `${p.vorname || ""} ${p.name || ""}`.trim() || "Unbekannt" : "Unbekannt";
 
+  const formatUhrzeit = (uhrzeit: string | null) => {
+    if (!uhrzeit) return "";
+    const [hh, mm] = uhrzeit.split(":");
+    if (!hh || !mm) return uhrzeit;
+    return `${hh}:${mm}`;
+  };
+
   const loadSharedData = async () => {
     const [profileListe, termineData, rueckData, teilnehmerData] = await Promise.all([
       supabase.from("profiles").select("id, vorname, name, ortswehr"),
@@ -414,7 +421,7 @@ export default function Dashboard() {
                     <div>
                       <h2 className="text-2xl font-bold text-yellow-300">{t.titel}</h2>
                       <p className="mt-2 text-sm text-slate-400">
-                        {t.datum} {t.uhrzeit || ""}
+                        {t.datum} {formatUhrzeit(t.uhrzeit)}
                       </p>
                       {t.hinweis && <p className="mt-3 text-slate-300">{t.hinweis}</p>}
                     </div>
