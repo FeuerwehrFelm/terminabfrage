@@ -9,14 +9,19 @@ import {
   LogOut,
   User,
   Mail,
-  Shield,
+  MapPin,
   XCircle,
+  Shield,
+  Truck,
+  Settings,
 } from "lucide-react";
 
 type Profile = {
   id: string;
   name: string;
-  role: string;
+  ortswehr: string | null;
+  pa_traeger: boolean;
+  maschinist: boolean;
 };
 
 type Termin = {
@@ -31,7 +36,12 @@ type Rueckmeldung = {
   termin_id: string;
   profile_id: string;
   status: string;
-  profiles?: { name: string }[] | null;
+  profiles?: {
+    name: string;
+    ortswehr: string | null;
+    pa_traeger: boolean;
+    maschinist: boolean;
+  }[] | null;
 };
 
 export default function Dashboard() {
@@ -56,7 +66,7 @@ export default function Dashboard() {
 
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("id, name, role")
+        .select("id, name, ortswehr, pa_traeger, maschinist")
         .eq("id", user.id)
         .single();
 
@@ -87,7 +97,12 @@ export default function Dashboard() {
           termin_id,
           profile_id,
           status,
-          profiles (name)
+          profiles (
+            name,
+            ortswehr,
+            pa_traeger,
+            maschinist
+          )
         `);
 
       if (rueckError) {
@@ -131,7 +146,14 @@ export default function Dashboard() {
           termin_id: terminId,
           profile_id: profile.id,
           status,
-          profiles: [{ name: profile.name }],
+          profiles: [
+            {
+              name: profile.name,
+              ortswehr: profile.ortswehr,
+              pa_traeger: profile.pa_traeger,
+              maschinist: profile.maschinist,
+            },
+          ],
         },
       ];
     });
@@ -197,20 +219,58 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-yellow-300/40 hover:bg-[#16243b]"
-            >
-              <LogOut className="h-4 w-4 text-yellow-300" />
-              Logout
-            </button>
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                onClick={() => (window.location.href = "/profil")}
+                className="flex items-center gap-2 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-yellow-300/40 hover:bg-[#16243b]"
+              >
+                <Settings className="h-4 w-4 text-yellow-300" />
+                Profil
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-yellow-300/40 hover:bg-[#16243b]"
+              >
+                <LogOut className="h-4 w-4 text-yellow-300" />
+                Logout
+              </button>
+            </div>
           </div>
         </div>
 
         <div className="mb-6 grid gap-4 md:grid-cols-3">
-          <InfoCard icon={<Mail className="h-4 w-4 text-yellow-300" />} label="E-Mail" value={userEmail} />
-          <InfoCard icon={<User className="h-4 w-4 text-yellow-300" />} label="Name" value={profile?.name || "-"} />
-          <InfoCard icon={<Shield className="h-4 w-4 text-yellow-300" />} label="Rolle" value={profile?.role || "-"} />
+          <InfoCard
+            icon={<Mail className="h-4 w-4 text-yellow-300" />}
+            label="E-Mail"
+            value={userEmail}
+          />
+          <InfoCard
+            icon={<User className="h-4 w-4 text-yellow-300" />}
+            label="Name"
+            value={profile?.name || "-"}
+          />
+          <InfoCard
+            icon={<MapPin className="h-4 w-4 text-yellow-300" />}
+            label="Ortswehr"
+            value={profile?.ortswehr || "-"}
+          />
+        </div>
+
+        <div className="mb-6 rounded-2xl border border-yellow-300/20 bg-[#0d1728]/85 p-5">
+          <div className="mb-3 text-sm text-slate-400">Qualifikationen</div>
+          <div className="flex flex-wrap gap-2">
+            <QualiBadge
+              active={!!profile?.pa_traeger}
+              icon={<Shield className="h-4 w-4" />}
+              label="PA-Träger"
+            />
+            <QualiBadge
+              active={!!profile?.maschinist}
+              icon={<Truck className="h-4 w-4" />}
+              label="Maschinist"
+            />
+          </div>
         </div>
 
         <div className="mb-6 grid gap-4 md:grid-cols-3">
@@ -305,22 +365,41 @@ export default function Dashboard() {
                         {alleAntworten(t.id).map((r, i) => (
                           <div
                             key={i}
-                            className="flex items-center justify-between rounded-2xl border border-yellow-300/10 bg-[#111c2f] px-4 py-3"
+                            className="rounded-2xl border border-yellow-300/10 bg-[#111c2f] px-4 py-3"
                           >
-                            <span className="font-medium text-white">
-                              {r.profiles?.[0]?.name || "Unbekannt"}
-                            </span>
-                            <Badge
-                              tone={
-                                r.status === "ja"
-                                  ? "green"
-                                  : r.status === "nein"
-                                  ? "red"
-                                  : "yellow"
-                              }
-                            >
-                              {r.status}
-                            </Badge>
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="font-medium text-white">
+                                  {r.profiles?.[0]?.name || "Unbekannt"}
+                                </div>
+                                <div className="mt-1 text-sm text-slate-400">
+                                  {r.profiles?.[0]?.ortswehr || "-"}
+                                </div>
+                              </div>
+
+                              <Badge
+                                tone={
+                                  r.status === "ja"
+                                    ? "green"
+                                    : r.status === "nein"
+                                    ? "red"
+                                    : "yellow"
+                                }
+                              >
+                                {r.status}
+                              </Badge>
+                            </div>
+
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <QualiMini
+                                active={!!r.profiles?.[0]?.pa_traeger}
+                                label="PA-Träger"
+                              />
+                              <QualiMini
+                                active={!!r.profiles?.[0]?.maschinist}
+                                label="Maschinist"
+                              />
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -393,6 +472,45 @@ function Badge({
   return (
     <span className={`rounded-full border px-3 py-1 text-sm font-medium ${styles}`}>
       {children}
+    </span>
+  );
+}
+
+function QualiBadge({
+  active,
+  icon,
+  label,
+}: {
+  active: boolean;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium ${
+        active
+          ? "border-yellow-300/25 bg-yellow-300/10 text-yellow-300"
+          : "border-slate-600/40 bg-slate-700/10 text-slate-400"
+      }`}
+    >
+      {icon}
+      {label}
+    </span>
+  );
+}
+
+function QualiMini({
+  active,
+  label,
+}: {
+  active: boolean;
+  label: string;
+}) {
+  if (!active) return null;
+
+  return (
+    <span className="rounded-full border border-yellow-300/20 bg-yellow-300/10 px-2 py-1 text-xs font-medium text-yellow-300">
+      {label}
     </span>
   );
 }
