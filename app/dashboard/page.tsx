@@ -168,7 +168,7 @@ export default function Dashboard() {
   const setAntwort = async (
     terminId: string,
     status: string,
-    rolle: "pa_traeger" | "maschinist" | "beide"
+    rolle: "pa_traeger" | "maschinist" | "beide" | null
   ) => {
     const actor = actorKey();
     if (!actor) return;
@@ -232,7 +232,7 @@ export default function Dashboard() {
     if (gespeicherteRolle === "maschinist") return { pa_traeger: false, maschinist: true };
     if (gespeicherteRolle === "pa_traeger") return { pa_traeger: true, maschinist: false };
 
-    return { pa_traeger: true, maschinist: false };
+    return { pa_traeger: false, maschinist: false };
   };
 
   const rollenWert = (terminId: string) => {
@@ -459,10 +459,6 @@ export default function Dashboard() {
                     <button
                       onClick={() => {
                         const rolle = rollenWert(t.id);
-                        if (!rolle) {
-                          alert("Bitte mindestens eine Rolle auswählen.");
-                          return;
-                        }
                         setAntwort(t.id, "ja", rolle);
                       }}
                       className="rounded-2xl border border-green-400/25 bg-green-500/10 px-4 py-2 font-medium text-green-300 transition hover:bg-green-500/20"
@@ -472,10 +468,6 @@ export default function Dashboard() {
                     <button
                       onClick={() => {
                         const rolle = rollenWert(t.id);
-                        if (!rolle) {
-                          alert("Bitte mindestens eine Rolle auswählen.");
-                          return;
-                        }
                         setAntwort(t.id, "nein", rolle);
                       }}
                       className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-2 font-medium text-red-300 transition hover:bg-red-500/20"
@@ -485,10 +477,6 @@ export default function Dashboard() {
                     <button
                       onClick={() => {
                         const rolle = rollenWert(t.id);
-                        if (!rolle) {
-                          alert("Bitte mindestens eine Rolle auswählen.");
-                          return;
-                        }
                         setAntwort(t.id, "unsicher", rolle);
                       }}
                       className="rounded-2xl border border-yellow-300/25 bg-yellow-300/10 px-4 py-2 font-medium text-yellow-300 transition hover:bg-yellow-300/20"

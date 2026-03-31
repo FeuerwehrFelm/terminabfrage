@@ -22,8 +22,7 @@ export default function Home() {
         </h1>
 
         <p className="mt-4 max-w-xl text-slate-400 text-lg">
-          Rückmeldung zu Diensten und Terminen ohne Passwort für die Mannschaft.
-          Admins verwalten Termine im geschützten Bereich.
+          Rückmeldungen zu Diensten und Terminen der Gemeindefeuerwehr Felm.
         </p>
 
         {/* Buttons */}

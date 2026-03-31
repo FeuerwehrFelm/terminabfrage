@@ -159,7 +159,7 @@ export default function TeilnahmePage() {
     if (gespeichert === "beide") return { pa_traeger: true, maschinist: true };
     if (gespeichert === "maschinist") return { pa_traeger: false, maschinist: true };
     if (gespeichert === "pa_traeger") return { pa_traeger: true, maschinist: false };
-    return { pa_traeger: true, maschinist: false };
+    return { pa_traeger: false, maschinist: false };
   };
 
   const rollenWert = (terminId: string) => {
@@ -187,11 +187,6 @@ export default function TeilnahmePage() {
     if (!teilnehmer) return;
 
     const rolle = rollenWert(terminId);
-    if (!rolle) {
-      setFehler("Bitte mindestens eine Rolle auswählen.");
-      return;
-    }
-
     setFehler("");
     setSpeichern(true);
 
