@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { ArrowLeft, MapPin, Save, Shield, Truck, User } from "lucide-react";
+import { ArrowLeft, MapPin, Save, User } from "lucide-react";
 
 type Profile = {
   id: string;
   name: string;
   ortswehr: string | null;
-  pa_traeger: boolean;
-  maschinist: boolean;
 };
 
 export default function ProfilPage() {
@@ -19,8 +17,6 @@ export default function ProfilPage() {
   const [profileId, setProfileId] = useState("");
   const [name, setName] = useState("");
   const [ortswehr, setOrtswehr] = useState("");
-  const [paTraeger, setPaTraeger] = useState(false);
-  const [maschinist, setMaschinist] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -35,7 +31,7 @@ export default function ProfilPage() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, name, ortswehr, pa_traeger, maschinist")
+        .select("id, name, ortswehr")
         .eq("id", user.id)
         .single();
 
@@ -50,8 +46,6 @@ export default function ProfilPage() {
       setProfileId(p.id);
       setName(p.name || "");
       setOrtswehr(p.ortswehr || "");
-      setPaTraeger(!!p.pa_traeger);
-      setMaschinist(!!p.maschinist);
       setLoading(false);
     };
 
@@ -68,8 +62,6 @@ export default function ProfilPage() {
       .update({
         name: name.trim(),
         ortswehr: ortswehr.trim(),
-        pa_traeger: paTraeger,
-        maschinist: maschinist,
       })
       .eq("id", profileId);
 
@@ -107,7 +99,7 @@ export default function ProfilPage() {
             </div>
             <h1 className="text-3xl font-bold">Deine Angaben</h1>
             <p className="mt-2 text-slate-400">
-              Hier kannst du Ortswehr und Qualifikationen selbst pflegen.
+              Hier kannst du Name und Ortswehr selbst pflegen.
             </p>
           </div>
 
@@ -144,28 +136,6 @@ export default function ProfilPage() {
             />
           </Field>
 
-          <div>
-            <label className="mb-3 block text-sm font-medium text-slate-200">
-              Qualifikationen
-            </label>
-
-            <div className="space-y-3">
-              <CheckRow
-                checked={paTraeger}
-                onChange={() => setPaTraeger(!paTraeger)}
-                icon={<Shield className="h-4 w-4 text-yellow-300" />}
-                label="PA-Träger"
-              />
-
-              <CheckRow
-                checked={maschinist}
-                onChange={() => setMaschinist(!maschinist)}
-                icon={<Truck className="h-4 w-4 text-yellow-300" />}
-                label="Maschinist"
-              />
-            </div>
-          </div>
-
           <button
             onClick={handleSave}
             disabled={saving}
@@ -199,33 +169,5 @@ function Field({
         <div className="w-full">{children}</div>
       </div>
     </div>
-  );
-}
-
-function CheckRow({
-  checked,
-  onChange,
-  icon,
-  label,
-}: {
-  checked: boolean;
-  onChange: () => void;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-4">
-      <div className="flex items-center gap-3">
-        {icon}
-        <span className="font-medium text-white">{label}</span>
-      </div>
-
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onChange}
-        className="h-5 w-5 accent-yellow-300"
-      />
-    </label>
   );
 }

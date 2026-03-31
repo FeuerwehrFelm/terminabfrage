@@ -20,8 +20,6 @@ type Profile = {
   id: string;
   name: string;
   ortswehr: string | null;
-  pa_traeger: boolean;
-  maschinist: boolean;
 };
 
 type Termin = {
@@ -36,6 +34,7 @@ type Rueckmeldung = {
   termin_id: string;
   profile_id: string;
   status: string;
+  rolle: "pa_traeger" | "maschinist" | null;
 };
 
 export default function Dashboard() {
@@ -44,6 +43,9 @@ export default function Dashboard() {
   const [alleProfile, setAlleProfile] = useState<Profile[]>([]);
   const [termine, setTermine] = useState<Termin[]>([]);
   const [rueckmeldungen, setRueckmeldungen] = useState<Rueckmeldung[]>([]);
+  const [rollenProTermin, setRollenProTermin] = useState<
+    Record<string, "pa_traeger" | "maschinist">
+  >({});
   const [loading, setLoading] = useState(true);
 
   const profilesById = useMemo(() => {
@@ -65,7 +67,7 @@ export default function Dashboard() {
 
       const { data: meinProfil, error: meinProfilError } = await supabase
         .from("profiles")
-        .select("id, name, ortswehr, pa_traeger, maschinist")
+        .select("id, name, ortswehr")
         .eq("id", user.id)
         .single();
 
@@ -79,7 +81,7 @@ export default function Dashboard() {
 
       const { data: profileListe, error: profileListeError } = await supabase
         .from("profiles")
-        .select("id, name, ortswehr, pa_traeger, maschinist");
+        .select("id, name, ortswehr");
 
       if (profileListeError) {
         alert("Profile konnten nicht geladen werden: " + profileListeError.message);
@@ -104,7 +106,7 @@ export default function Dashboard() {
 
       const { data: rueckData, error: rueckError } = await supabase
         .from("rueckmeldungen")
-        .select("termin_id, profile_id, status");
+        .select("termin_id, profile_id, status, rolle");
 
       if (rueckError) {
         alert("Rückmeldungen konnten nicht geladen werden: " + rueckError.message);
@@ -119,7 +121,11 @@ export default function Dashboard() {
     loadData();
   }, []);
 
-  const setAntwort = async (terminId: string, status: string) => {
+  const setAntwort = async (
+    terminId: string,
+    status: string,
+    rolle: "pa_traeger" | "maschinist"
+  ) => {
     if (!profile) return;
 
     const { error } = await supabase.from("rueckmeldungen").upsert(
@@ -127,6 +133,7 @@ export default function Dashboard() {
         termin_id: terminId,
         profile_id: profile.id,
         status,
+        rolle,
       },
       { onConflict: "termin_id,profile_id" }
     );
@@ -147,15 +154,19 @@ export default function Dashboard() {
           termin_id: terminId,
           profile_id: profile.id,
           status,
+          rolle,
         },
       ];
     });
   };
 
-  const eigeneAntwort = (terminId: string) =>
-    rueckmeldungen.find(
-      (r) => r.termin_id === terminId && r.profile_id === profile?.id
-    )?.status || "keine";
+  const eigeneRueckmeldung = (terminId: string) =>
+    rueckmeldungen.find((r) => r.termin_id === terminId && r.profile_id === profile?.id);
+
+  const eigeneAntwort = (terminId: string) => eigeneRueckmeldung(terminId)?.status || "keine";
+
+  const aktiveRolle = (terminId: string) =>
+    rollenProTermin[terminId] || eigeneRueckmeldung(terminId)?.rolle || "pa_traeger";
 
   const alleAntworten = (terminId: string) =>
     rueckmeldungen.filter((r) => r.termin_id === terminId);
@@ -251,18 +262,8 @@ export default function Dashboard() {
         </div>
 
         <div className="mb-6 rounded-2xl border border-yellow-300/20 bg-[#0d1728]/85 p-5">
-          <div className="mb-3 text-sm text-slate-400">Qualifikationen</div>
-          <div className="flex flex-wrap gap-2">
-            <QualiBadge
-              active={!!profile?.pa_traeger}
-              icon={<Shield className="h-4 w-4" />}
-              label="PA-Träger"
-            />
-            <QualiBadge
-              active={!!profile?.maschinist}
-              icon={<Truck className="h-4 w-4" />}
-              label="Maschinist"
-            />
+          <div className="text-sm text-slate-300">
+            Rolle wird jetzt pro Termin ausgewählt.
           </div>
         </div>
 
@@ -318,19 +319,52 @@ export default function Dashboard() {
 
                   <div className="mb-5 flex flex-wrap gap-3">
                     <button
-                      onClick={() => setAntwort(t.id, "ja")}
+                      onClick={() =>
+                        setRollenProTermin((prev) => ({ ...prev, [t.id]: "pa_traeger" }))
+                      }
+                      className={`rounded-2xl border px-4 py-2 font-medium transition ${
+                        aktiveRolle(t.id) === "pa_traeger"
+                          ? "border-yellow-300/25 bg-yellow-300/10 text-yellow-300"
+                          : "border-slate-500/30 bg-slate-700/10 text-slate-300 hover:border-yellow-300/25"
+                      }`}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        PA-Träger
+                      </span>
+                    </button>
+                    <button
+                      onClick={() =>
+                        setRollenProTermin((prev) => ({ ...prev, [t.id]: "maschinist" }))
+                      }
+                      className={`rounded-2xl border px-4 py-2 font-medium transition ${
+                        aktiveRolle(t.id) === "maschinist"
+                          ? "border-yellow-300/25 bg-yellow-300/10 text-yellow-300"
+                          : "border-slate-500/30 bg-slate-700/10 text-slate-300 hover:border-yellow-300/25"
+                      }`}
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <Truck className="h-4 w-4" />
+                        Maschinist
+                      </span>
+                    </button>
+                  </div>
+
+                  <div className="mb-5 flex flex-wrap gap-3">
+                    <button
+                      onClick={() => setAntwort(t.id, "ja", aktiveRolle(t.id))}
                       className="rounded-2xl border border-green-400/25 bg-green-500/10 px-4 py-2 font-medium text-green-300 transition hover:bg-green-500/20"
                     >
                       Ja
                     </button>
                     <button
-                      onClick={() => setAntwort(t.id, "nein")}
+                      onClick={() => setAntwort(t.id, "nein", aktiveRolle(t.id))}
                       className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-2 font-medium text-red-300 transition hover:bg-red-500/20"
                     >
                       Nein
                     </button>
                     <button
-                      onClick={() => setAntwort(t.id, "unsicher")}
+                      onClick={() => setAntwort(t.id, "unsicher", aktiveRolle(t.id))}
                       className="rounded-2xl border border-yellow-300/25 bg-yellow-300/10 px-4 py-2 font-medium text-yellow-300 transition hover:bg-yellow-300/20"
                     >
                       Unsicher
@@ -341,6 +375,14 @@ export default function Dashboard() {
                     <div className="text-sm text-slate-400">Deine Antwort</div>
                     <div className="mt-1 text-lg font-semibold text-white">
                       {eigeneAntwort(t.id)}
+                    </div>
+                    <div className="mt-2 text-sm text-slate-300">
+                      Rolle:{" "}
+                      {eigeneRueckmeldung(t.id)?.rolle === "maschinist"
+                        ? "Maschinist"
+                        : eigeneRueckmeldung(t.id)?.rolle === "pa_traeger"
+                        ? "PA-Träger"
+                        : "-"}
                     </div>
                   </div>
 
@@ -386,16 +428,13 @@ export default function Dashboard() {
                                 </Badge>
                               </div>
 
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                <QualiMini
-                                  active={!!person?.pa_traeger}
-                                  label="PA-Träger"
-                                />
-                                <QualiMini
-                                  active={!!person?.maschinist}
-                                  label="Maschinist"
-                                />
-                              </div>
+                              {r.rolle && (
+                                <div className="mt-3">
+                                  <span className="rounded-full border border-yellow-300/20 bg-yellow-300/10 px-2 py-1 text-xs font-medium text-yellow-300">
+                                    {r.rolle === "maschinist" ? "Maschinist" : "PA-Träger"}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -469,45 +508,6 @@ function Badge({
   return (
     <span className={`rounded-full border px-3 py-1 text-sm font-medium ${styles}`}>
       {children}
-    </span>
-  );
-}
-
-function QualiBadge({
-  active,
-  icon,
-  label,
-}: {
-  active: boolean;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <span
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium ${
-        active
-          ? "border-yellow-300/25 bg-yellow-300/10 text-yellow-300"
-          : "border-slate-600/40 bg-slate-700/10 text-slate-400"
-      }`}
-    >
-      {icon}
-      {label}
-    </span>
-  );
-}
-
-function QualiMini({
-  active,
-  label,
-}: {
-  active: boolean;
-  label: string;
-}) {
-  if (!active) return null;
-
-  return (
-    <span className="rounded-full border border-yellow-300/20 bg-yellow-300/10 px-2 py-1 text-xs font-medium text-yellow-300">
-      {label}
     </span>
   );
 }
