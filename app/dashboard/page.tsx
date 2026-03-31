@@ -46,9 +46,20 @@ type Rueckmeldung = {
   rolle: "pa_traeger" | "maschinist" | "beide" | null;
 };
 
+type TeilnahmeSession = {
+  id: string;
+  vorname: string;
+  name: string;
+  ortswehr: string;
+};
+
+const SESSION_KEY = "teilnahme_session_v1";
+
 export default function Dashboard() {
+  const [mode, setMode] = useState<"auth" | "teilnehmer" | null>(null);
   const [userEmail, setUserEmail] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [teilnehmerSession, setTeilnehmerSession] = useState<Teilnehmer | null>(null);
   const [alleProfile, setAlleProfile] = useState<Profile[]>([]);
   const [alleTeilnehmer, setAlleTeilnehmer] = useState<Teilnehmer[]>([]);
   const [termine, setTermine] = useState<Termin[]>([]);
@@ -69,96 +80,107 @@ export default function Dashboard() {
   const fullName = (p?: Profile | null) =>
     p ? `${p.vorname || ""} ${p.name || ""}`.trim() || "Unbekannt" : "Unbekannt";
 
-  useEffect(() => {
-    const loadData = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        window.location.href = "/login";
-        return;
-      }
-
-      setUserEmail(user.email || "");
-
-      const { data: meinProfil, error: meinProfilError } = await supabase
-        .from("profiles")
-        .select("id, vorname, name, ortswehr")
-        .eq("id", user.id)
-        .single();
-
-      if (meinProfilError || !meinProfil) {
-        alert("Profil konnte nicht geladen werden.");
-        setLoading(false);
-        return;
-      }
-
-      setProfile(meinProfil);
-
-      const { data: profileListe, error: profileListeError } = await supabase
-        .from("profiles")
-        .select("id, vorname, name, ortswehr");
-
-      if (profileListeError) {
-        alert("Profile konnten nicht geladen werden: " + profileListeError.message);
-        setLoading(false);
-        return;
-      }
-
-      setAlleProfile(profileListe || []);
-
-      const { data: termineData, error: termineError } = await supabase
+  const loadSharedData = async () => {
+    const [profileListe, termineData, rueckData, teilnehmerData] = await Promise.all([
+      supabase.from("profiles").select("id, vorname, name, ortswehr"),
+      supabase
         .from("termine")
         .select("id, titel, datum, uhrzeit, hinweis")
-        .order("datum", { ascending: true });
-
-      if (termineError) {
-        alert("Termine konnten nicht geladen werden: " + termineError.message);
-        setLoading(false);
-        return;
-      }
-
-      setTermine(termineData || []);
-
-      const { data: rueckData, error: rueckError } = await supabase
+        .order("datum", { ascending: true }),
+      supabase
         .from("rueckmeldungen")
-        .select("termin_id, profile_id, teilnehmer_id, status, rolle");
+        .select("termin_id, profile_id, teilnehmer_id, status, rolle"),
+      supabase.from("teilnehmer").select("id, vorname, name, ortswehr"),
+    ]);
 
-      if (rueckError) {
-        alert("Rückmeldungen konnten nicht geladen werden: " + rueckError.message);
+    if (profileListe.error) throw new Error(profileListe.error.message);
+    if (termineData.error) throw new Error(termineData.error.message);
+    if (rueckData.error) throw new Error(rueckData.error.message);
+
+    setAlleProfile((profileListe.data as Profile[]) || []);
+    setTermine((termineData.data as Termin[]) || []);
+    setRueckmeldungen((rueckData.data as Rueckmeldung[]) || []);
+    setAlleTeilnehmer((teilnehmerData.data as Teilnehmer[]) || []);
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          setMode("auth");
+          setUserEmail(user.email || "");
+
+          const { data: meinProfil, error: meinProfilError } = await supabase
+            .from("profiles")
+            .select("id, vorname, name, ortswehr")
+            .eq("id", user.id)
+            .single();
+
+          if (meinProfilError || !meinProfil) {
+            throw new Error("Profil konnte nicht geladen werden.");
+          }
+
+          setProfile(meinProfil as Profile);
+          await loadSharedData();
+          setLoading(false);
+          return;
+        }
+
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (raw) {
+          const session = JSON.parse(raw) as TeilnahmeSession;
+          if (session?.id) {
+            setMode("teilnehmer");
+            setTeilnehmerSession(session);
+            await loadSharedData();
+            setLoading(false);
+            return;
+          }
+        }
+
+        window.location.href = "/teilnahme";
+      } catch (e) {
+        alert("Dashboard konnte nicht geladen werden.");
+        console.error(e);
         setLoading(false);
-        return;
       }
-
-      const { data: teilnehmerData } = await supabase
-        .from("teilnehmer")
-        .select("id, vorname, name, ortswehr");
-
-      setAlleTeilnehmer((teilnehmerData as Teilnehmer[]) || []);
-      setRueckmeldungen((rueckData as Rueckmeldung[]) || []);
-      setLoading(false);
     };
 
-    loadData();
+    init();
   }, []);
+
+  const actorKey = () => {
+    if (mode === "auth" && profile) return { profileId: profile.id, teilnehmerId: null as string | null };
+    if (mode === "teilnehmer" && teilnehmerSession)
+      return { profileId: null as string | null, teilnehmerId: teilnehmerSession.id };
+    return null;
+  };
 
   const setAntwort = async (
     terminId: string,
     status: string,
     rolle: "pa_traeger" | "maschinist" | "beide"
   ) => {
-    if (!profile) return;
+    const actor = actorKey();
+    if (!actor) return;
 
-    const { error } = await supabase.from("rueckmeldungen").upsert(
-      {
-        termin_id: terminId,
-        profile_id: profile.id,
-        status,
-        rolle,
-      },
-      { onConflict: "termin_id,profile_id" }
-    );
+    const payload = {
+      termin_id: terminId,
+      profile_id: actor.profileId,
+      teilnehmer_id: actor.teilnehmerId,
+      status,
+      rolle,
+    };
+
+    const { error } = await supabase
+      .from("rueckmeldungen")
+      .upsert(payload, {
+        onConflict: actor.profileId ? "termin_id,profile_id" : "termin_id,teilnehmer_id",
+      });
 
     if (error) {
       alert("Fehler beim Speichern: " + error.message);
@@ -167,24 +189,29 @@ export default function Dashboard() {
 
     setRueckmeldungen((prev) => {
       const andere = prev.filter(
-        (r) => !(r.termin_id === terminId && r.profile_id === profile.id)
+        (r) =>
+          !(
+            r.termin_id === terminId &&
+            r.profile_id === actor.profileId &&
+            r.teilnehmer_id === actor.teilnehmerId
+          )
       );
 
-      return [
-        ...andere,
-        {
-          termin_id: terminId,
-          profile_id: profile.id,
-          teilnehmer_id: null,
-          status,
-          rolle,
-        },
-      ];
+      return [...andere, payload];
     });
   };
 
-  const eigeneRueckmeldung = (terminId: string) =>
-    rueckmeldungen.find((r) => r.termin_id === terminId && r.profile_id === profile?.id);
+  const eigeneRueckmeldung = (terminId: string) => {
+    const actor = actorKey();
+    if (!actor) return undefined;
+
+    return rueckmeldungen.find(
+      (r) =>
+        r.termin_id === terminId &&
+        r.profile_id === actor.profileId &&
+        r.teilnehmer_id === actor.teilnehmerId
+    );
+  };
 
   const eigeneAntwort = (terminId: string) => eigeneRueckmeldung(terminId)?.status || "keine";
 
@@ -244,6 +271,11 @@ export default function Dashboard() {
     window.location.href = "/login";
   };
 
+  const handleTeilnehmerLogout = () => {
+    localStorage.removeItem(SESSION_KEY);
+    window.location.href = "/teilnahme";
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#081120] text-white flex items-center justify-center">
@@ -267,31 +299,41 @@ export default function Dashboard() {
                   Terminabfrage
                 </span>
               </div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                Rückmeldungen zu Terminen
-              </h1>
+              <h1 className="text-3xl font-bold tracking-tight">Rückmeldungen zu Terminen</h1>
               <p className="mt-2 max-w-2xl text-slate-300">
-                Alle Antworten sind transparent sichtbar. Du kannst pro Termin mit
-                Ja, Nein oder Unsicher reagieren.
+                Alle Antworten sind transparent sichtbar. Du kannst pro Termin mit Ja, Nein oder
+                Unsicher reagieren.
               </p>
             </div>
 
             <div className="flex items-center gap-3 flex-wrap">
-              <button
-                onClick={() => (window.location.href = "/profil")}
-                className="flex items-center gap-2 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-yellow-300/40 hover:bg-[#16243b]"
-              >
-                <Settings className="h-4 w-4 text-yellow-300" />
-                Profil
-              </button>
+              {mode === "auth" ? (
+                <>
+                  <button
+                    onClick={() => (window.location.href = "/profil")}
+                    className="flex items-center gap-2 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-yellow-300/40 hover:bg-[#16243b]"
+                  >
+                    <Settings className="h-4 w-4 text-yellow-300" />
+                    Profil
+                  </button>
 
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-yellow-300/40 hover:bg-[#16243b]"
-              >
-                <LogOut className="h-4 w-4 text-yellow-300" />
-                Logout
-              </button>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-yellow-300/40 hover:bg-[#16243b]"
+                  >
+                    <LogOut className="h-4 w-4 text-yellow-300" />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={handleTeilnehmerLogout}
+                  className="flex items-center gap-2 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-yellow-300/40 hover:bg-[#16243b]"
+                >
+                  <LogOut className="h-4 w-4 text-yellow-300" />
+                  Person wechseln
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -299,25 +341,33 @@ export default function Dashboard() {
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <InfoCard
             icon={<Mail className="h-4 w-4 text-yellow-300" />}
-            label="E-Mail"
-            value={userEmail}
+            label={mode === "auth" ? "E-Mail" : "Modus"}
+            value={mode === "auth" ? userEmail : "Teilnahme ohne Login"}
           />
           <InfoCard
             icon={<User className="h-4 w-4 text-yellow-300" />}
             label="Name"
-            value={fullName(profile)}
+            value={
+              mode === "auth"
+                ? fullName(profile)
+                : teilnehmerSession
+                ? `${teilnehmerSession.vorname} ${teilnehmerSession.name}`
+                : "-"
+            }
           />
           <InfoCard
             icon={<MapPin className="h-4 w-4 text-yellow-300" />}
             label="Ortswehr"
-            value={profile?.ortswehr || "-"}
+            value={
+              mode === "auth"
+                ? profile?.ortswehr || "-"
+                : teilnehmerSession?.ortswehr || "-"
+            }
           />
         </div>
 
         <div className="mb-6 rounded-2xl border border-yellow-300/20 bg-[#0d1728]/85 p-5">
-          <div className="text-sm text-slate-300">
-            Rolle wird jetzt pro Termin ausgewählt.
-          </div>
+          <div className="text-sm text-slate-300">Rolle wird pro Termin ausgewählt.</div>
         </div>
 
         <div className="mb-6 grid gap-4 md:grid-cols-3">
@@ -358,9 +408,7 @@ export default function Dashboard() {
                       <p className="mt-2 text-sm text-slate-400">
                         {t.datum} {t.uhrzeit || ""}
                       </p>
-                      {t.hinweis && (
-                        <p className="mt-3 text-slate-300">{t.hinweis}</p>
-                      )}
+                      {t.hinweis && <p className="mt-3 text-slate-300">{t.hinweis}</p>}
                     </div>
 
                     <div className="flex flex-wrap gap-2">
@@ -443,9 +491,7 @@ export default function Dashboard() {
 
                   <div className="mb-5 rounded-2xl border border-yellow-300/15 bg-[#111c2f] p-4">
                     <div className="text-sm text-slate-400">Deine Antwort</div>
-                    <div className="mt-1 text-lg font-semibold text-white">
-                      {eigeneAntwort(t.id)}
-                    </div>
+                    <div className="mt-1 text-lg font-semibold text-white">{eigeneAntwort(t.id)}</div>
                     <div className="mt-2 text-sm text-slate-300">
                       Rolle:{" "}
                       {eigeneRueckmeldung(t.id)?.rolle === "beide"
@@ -459,9 +505,7 @@ export default function Dashboard() {
                   </div>
 
                   <div>
-                    <div className="mb-3 text-lg font-semibold text-yellow-300">
-                      Alle Rückmeldungen
-                    </div>
+                    <div className="mb-3 text-lg font-semibold text-yellow-300">Alle Rückmeldungen</div>
 
                     {alleAntworten(t.id).length === 0 ? (
                       <div className="rounded-2xl border border-yellow-300/10 bg-[#111c2f] p-4 text-slate-400">
@@ -471,9 +515,7 @@ export default function Dashboard() {
                       <div className="space-y-2">
                         {alleAntworten(t.id).map((r, i) => {
                           const person = r.profile_id ? profilesById[r.profile_id] : null;
-                          const teilnehmer = r.teilnehmer_id
-                            ? teilnehmerById[r.teilnehmer_id]
-                            : null;
+                          const teilnehmer = r.teilnehmer_id ? teilnehmerById[r.teilnehmer_id] : null;
 
                           return (
                             <div
@@ -586,9 +628,5 @@ function Badge({
       ? "border-red-400/25 bg-red-500/10 text-red-300"
       : "border-yellow-300/25 bg-yellow-300/10 text-yellow-300";
 
-  return (
-    <span className={`rounded-full border px-3 py-1 text-sm font-medium ${styles}`}>
-      {children}
-    </span>
-  );
+  return <span className={`rounded-full border px-3 py-1 text-sm font-medium ${styles}`}>{children}</span>;
 }

@@ -300,7 +300,7 @@ export default function TeilnahmePage() {
     setTeilnehmer(person);
     setCode("");
     setEintrittLaden(false);
-    await ladeDaten();
+    window.location.href = "/dashboard";
   };
 
   const handlePersonWechsel = () => {
