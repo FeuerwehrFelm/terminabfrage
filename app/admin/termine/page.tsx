@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { CalendarDays, FileText, ShieldCheck } from "lucide-react";
+import { CalendarDays, FileText, ShieldCheck, Trash2 } from "lucide-react";
 
 type Profile = {
   id: string;
@@ -10,14 +10,38 @@ type Profile = {
   role: string;
 };
 
+type Termin = {
+  id: string;
+  titel: string;
+  datum: string;
+  uhrzeit: string | null;
+  hinweis: string | null;
+};
+
 export default function AdminTerminePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [termine, setTermine] = useState<Termin[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [titel, setTitel] = useState("");
   const [datum, setDatum] = useState("");
   const [uhrzeit, setUhrzeit] = useState("");
   const [hinweis, setHinweis] = useState("");
+
+  const loadTermine = async () => {
+    const { data, error } = await supabase
+      .from("termine")
+      .select("id, titel, datum, uhrzeit, hinweis")
+      .order("datum", { ascending: true });
+
+    if (error) {
+      alert("Termine konnten nicht geladen werden: " + error.message);
+      return;
+    }
+
+    setTermine((data as Termin[]) || []);
+  };
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -48,6 +72,7 @@ export default function AdminTerminePage() {
       }
 
       setProfile(data);
+      await loadTermine();
       setLoading(false);
     };
 
@@ -80,6 +105,27 @@ export default function AdminTerminePage() {
     setDatum("");
     setUhrzeit("");
     setHinweis("");
+    await loadTermine();
+  };
+
+  const handleDeleteTermin = async (termin: Termin) => {
+    const bestaetigt = window.confirm(
+      `Termin "${termin.titel}" am ${termin.datum} wirklich löschen?`
+    );
+    if (!bestaetigt) return;
+
+    setDeletingId(termin.id);
+
+    const { error } = await supabase.from("termine").delete().eq("id", termin.id);
+
+    setDeletingId(null);
+
+    if (error) {
+      alert("Fehler beim Löschen: " + error.message);
+      return;
+    }
+
+    setTermine((prev) => prev.filter((t) => t.id !== termin.id));
   };
 
   if (loading) {
@@ -153,6 +199,44 @@ export default function AdminTerminePage() {
           >
             Termin speichern
           </button>
+        </div>
+
+        <div className="mt-6 rounded-3xl border border-yellow-300/20 bg-[#0d1728]/85 p-6">
+          <h2 className="text-xl font-semibold text-yellow-300">Vorhandene Termine</h2>
+          <p className="mt-1 text-sm text-slate-400">
+            Hier kannst du bestehende Termine löschen.
+          </p>
+
+          <div className="mt-4 space-y-3">
+            {termine.length === 0 ? (
+              <div className="rounded-2xl border border-yellow-300/10 bg-[#111c2f] p-4 text-slate-400">
+                Noch keine Termine vorhanden.
+              </div>
+            ) : (
+              termine.map((termin) => (
+                <div
+                  key={termin.id}
+                  className="flex flex-col gap-3 rounded-2xl border border-yellow-300/10 bg-[#111c2f] p-4 md:flex-row md:items-center md:justify-between"
+                >
+                  <div>
+                    <div className="font-semibold text-white">{termin.titel}</div>
+                    <div className="mt-1 text-sm text-slate-400">
+                      {termin.datum} {termin.uhrzeit || ""}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleDeleteTermin(termin)}
+                    disabled={deletingId === termin.id}
+                    className="inline-flex items-center gap-2 rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-300 transition hover:bg-red-500/20 disabled:opacity-60"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {deletingId === termin.id ? "Lösche..." : "Löschen"}
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

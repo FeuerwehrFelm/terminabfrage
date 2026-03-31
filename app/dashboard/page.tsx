@@ -18,6 +18,7 @@ import {
 
 type Profile = {
   id: string;
+  vorname?: string | null;
   name: string;
   ortswehr: string | null;
 };
@@ -34,7 +35,7 @@ type Rueckmeldung = {
   termin_id: string;
   profile_id: string;
   status: string;
-  rolle: "pa_traeger" | "maschinist" | null;
+  rolle: "pa_traeger" | "maschinist" | "beide" | null;
 };
 
 export default function Dashboard() {
@@ -44,13 +45,16 @@ export default function Dashboard() {
   const [termine, setTermine] = useState<Termin[]>([]);
   const [rueckmeldungen, setRueckmeldungen] = useState<Rueckmeldung[]>([]);
   const [rollenProTermin, setRollenProTermin] = useState<
-    Record<string, "pa_traeger" | "maschinist">
+    Record<string, { pa_traeger: boolean; maschinist: boolean }>
   >({});
   const [loading, setLoading] = useState(true);
 
   const profilesById = useMemo(() => {
     return Object.fromEntries(alleProfile.map((p) => [p.id, p]));
   }, [alleProfile]);
+
+  const fullName = (p?: Profile | null) =>
+    p ? `${p.vorname || ""} ${p.name || ""}`.trim() || "Unbekannt" : "Unbekannt";
 
   useEffect(() => {
     const loadData = async () => {
@@ -67,7 +71,7 @@ export default function Dashboard() {
 
       const { data: meinProfil, error: meinProfilError } = await supabase
         .from("profiles")
-        .select("id, name, ortswehr")
+        .select("id, vorname, name, ortswehr")
         .eq("id", user.id)
         .single();
 
@@ -81,7 +85,7 @@ export default function Dashboard() {
 
       const { data: profileListe, error: profileListeError } = await supabase
         .from("profiles")
-        .select("id, name, ortswehr");
+        .select("id, vorname, name, ortswehr");
 
       if (profileListeError) {
         alert("Profile konnten nicht geladen werden: " + profileListeError.message);
@@ -124,7 +128,7 @@ export default function Dashboard() {
   const setAntwort = async (
     terminId: string,
     status: string,
-    rolle: "pa_traeger" | "maschinist"
+    rolle: "pa_traeger" | "maschinist" | "beide"
   ) => {
     if (!profile) return;
 
@@ -165,8 +169,38 @@ export default function Dashboard() {
 
   const eigeneAntwort = (terminId: string) => eigeneRueckmeldung(terminId)?.status || "keine";
 
-  const aktiveRolle = (terminId: string) =>
-    rollenProTermin[terminId] || eigeneRueckmeldung(terminId)?.rolle || "pa_traeger";
+  const rollenState = (terminId: string) => {
+    const lokal = rollenProTermin[terminId];
+    if (lokal) return lokal;
+
+    const gespeicherteRolle = eigeneRueckmeldung(terminId)?.rolle;
+    if (gespeicherteRolle === "beide") return { pa_traeger: true, maschinist: true };
+    if (gespeicherteRolle === "maschinist") return { pa_traeger: false, maschinist: true };
+    if (gespeicherteRolle === "pa_traeger") return { pa_traeger: true, maschinist: false };
+
+    return { pa_traeger: true, maschinist: false };
+  };
+
+  const rollenWert = (terminId: string) => {
+    const state = rollenState(terminId);
+    if (state.pa_traeger && state.maschinist) return "beide";
+    if (state.pa_traeger) return "pa_traeger";
+    if (state.maschinist) return "maschinist";
+    return null;
+  };
+
+  const toggleRolle = (terminId: string, key: "pa_traeger" | "maschinist") => {
+    setRollenProTermin((prev) => {
+      const current = prev[terminId] || rollenState(terminId);
+      return {
+        ...prev,
+        [terminId]: {
+          ...current,
+          [key]: !current[key],
+        },
+      };
+    });
+  };
 
   const alleAntworten = (terminId: string) =>
     rueckmeldungen.filter((r) => r.termin_id === terminId);
@@ -252,7 +286,7 @@ export default function Dashboard() {
           <InfoCard
             icon={<User className="h-4 w-4 text-yellow-300" />}
             label="Name"
-            value={profile?.name || "-"}
+            value={fullName(profile)}
           />
           <InfoCard
             icon={<MapPin className="h-4 w-4 text-yellow-300" />}
@@ -319,11 +353,9 @@ export default function Dashboard() {
 
                   <div className="mb-5 flex flex-wrap gap-3">
                     <button
-                      onClick={() =>
-                        setRollenProTermin((prev) => ({ ...prev, [t.id]: "pa_traeger" }))
-                      }
+                      onClick={() => toggleRolle(t.id, "pa_traeger")}
                       className={`rounded-2xl border px-4 py-2 font-medium transition ${
-                        aktiveRolle(t.id) === "pa_traeger"
+                        rollenState(t.id).pa_traeger
                           ? "border-yellow-300/25 bg-yellow-300/10 text-yellow-300"
                           : "border-slate-500/30 bg-slate-700/10 text-slate-300 hover:border-yellow-300/25"
                       }`}
@@ -334,11 +366,9 @@ export default function Dashboard() {
                       </span>
                     </button>
                     <button
-                      onClick={() =>
-                        setRollenProTermin((prev) => ({ ...prev, [t.id]: "maschinist" }))
-                      }
+                      onClick={() => toggleRolle(t.id, "maschinist")}
                       className={`rounded-2xl border px-4 py-2 font-medium transition ${
-                        aktiveRolle(t.id) === "maschinist"
+                        rollenState(t.id).maschinist
                           ? "border-yellow-300/25 bg-yellow-300/10 text-yellow-300"
                           : "border-slate-500/30 bg-slate-700/10 text-slate-300 hover:border-yellow-300/25"
                       }`}
@@ -352,19 +382,40 @@ export default function Dashboard() {
 
                   <div className="mb-5 flex flex-wrap gap-3">
                     <button
-                      onClick={() => setAntwort(t.id, "ja", aktiveRolle(t.id))}
+                      onClick={() => {
+                        const rolle = rollenWert(t.id);
+                        if (!rolle) {
+                          alert("Bitte mindestens eine Rolle auswählen.");
+                          return;
+                        }
+                        setAntwort(t.id, "ja", rolle);
+                      }}
                       className="rounded-2xl border border-green-400/25 bg-green-500/10 px-4 py-2 font-medium text-green-300 transition hover:bg-green-500/20"
                     >
                       Ja
                     </button>
                     <button
-                      onClick={() => setAntwort(t.id, "nein", aktiveRolle(t.id))}
+                      onClick={() => {
+                        const rolle = rollenWert(t.id);
+                        if (!rolle) {
+                          alert("Bitte mindestens eine Rolle auswählen.");
+                          return;
+                        }
+                        setAntwort(t.id, "nein", rolle);
+                      }}
                       className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-2 font-medium text-red-300 transition hover:bg-red-500/20"
                     >
                       Nein
                     </button>
                     <button
-                      onClick={() => setAntwort(t.id, "unsicher", aktiveRolle(t.id))}
+                      onClick={() => {
+                        const rolle = rollenWert(t.id);
+                        if (!rolle) {
+                          alert("Bitte mindestens eine Rolle auswählen.");
+                          return;
+                        }
+                        setAntwort(t.id, "unsicher", rolle);
+                      }}
                       className="rounded-2xl border border-yellow-300/25 bg-yellow-300/10 px-4 py-2 font-medium text-yellow-300 transition hover:bg-yellow-300/20"
                     >
                       Unsicher
@@ -378,7 +429,9 @@ export default function Dashboard() {
                     </div>
                     <div className="mt-2 text-sm text-slate-300">
                       Rolle:{" "}
-                      {eigeneRueckmeldung(t.id)?.rolle === "maschinist"
+                      {eigeneRueckmeldung(t.id)?.rolle === "beide"
+                        ? "PA-Träger + Maschinist"
+                        : eigeneRueckmeldung(t.id)?.rolle === "maschinist"
                         ? "Maschinist"
                         : eigeneRueckmeldung(t.id)?.rolle === "pa_traeger"
                         ? "PA-Träger"
@@ -408,10 +461,10 @@ export default function Dashboard() {
                               <div className="flex items-center justify-between gap-3">
                                 <div>
                                   <div className="font-medium text-white">
-                                    {person?.name || "Unbekannt"}
-                                  </div>
-                                  <div className="mt-1 text-sm text-slate-400">
-                                    {person?.ortswehr || "-"}
+                                    {fullName(person)}{" "}
+                                    <span className="text-sm text-slate-400">
+                                      ({person?.ortswehr || "-"})
+                                    </span>
                                   </div>
                                 </div>
 
@@ -431,7 +484,11 @@ export default function Dashboard() {
                               {r.rolle && (
                                 <div className="mt-3">
                                   <span className="rounded-full border border-yellow-300/20 bg-yellow-300/10 px-2 py-1 text-xs font-medium text-yellow-300">
-                                    {r.rolle === "maschinist" ? "Maschinist" : "PA-Träger"}
+                                    {r.rolle === "beide"
+                                      ? "PA-Träger + Maschinist"
+                                      : r.rolle === "maschinist"
+                                      ? "Maschinist"
+                                      : "PA-Träger"}
                                   </span>
                                 </div>
                               )}

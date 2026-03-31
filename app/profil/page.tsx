@@ -6,6 +6,7 @@ import { ArrowLeft, MapPin, Save, User } from "lucide-react";
 
 type Profile = {
   id: string;
+  vorname: string | null;
   name: string;
   ortswehr: string | null;
 };
@@ -15,8 +16,10 @@ export default function ProfilPage() {
   const [saving, setSaving] = useState(false);
 
   const [profileId, setProfileId] = useState("");
+  const [vorname, setVorname] = useState("");
   const [name, setName] = useState("");
   const [ortswehr, setOrtswehr] = useState("");
+  const [ortswehrOptionen, setOrtswehrOptionen] = useState<string[]>([]);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -31,7 +34,7 @@ export default function ProfilPage() {
 
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, name, ortswehr")
+        .select("id, vorname, name, ortswehr")
         .eq("id", user.id)
         .single();
 
@@ -44,8 +47,25 @@ export default function ProfilPage() {
       const p = data as Profile;
 
       setProfileId(p.id);
+      setVorname(p.vorname || "");
       setName(p.name || "");
       setOrtswehr(p.ortswehr || "");
+
+      const { data: ortswehren, error: ortswehrError } = await supabase
+        .from("profiles")
+        .select("ortswehr");
+
+      if (!ortswehrError && ortswehren) {
+        const optionen = Array.from(
+          new Set(
+            ortswehren
+              .map((o) => o.ortswehr?.trim())
+              .filter((o): o is string => !!o)
+          )
+        );
+        setOrtswehrOptionen(optionen);
+      }
+
       setLoading(false);
     };
 
@@ -60,6 +80,7 @@ export default function ProfilPage() {
     const { error } = await supabase
       .from("profiles")
       .update({
+        vorname: vorname.trim(),
         name: name.trim(),
         ortswehr: ortswehr.trim(),
       })
@@ -99,7 +120,7 @@ export default function ProfilPage() {
             </div>
             <h1 className="text-3xl font-bold">Deine Angaben</h1>
             <p className="mt-2 text-slate-400">
-              Hier kannst du Name und Ortswehr selbst pflegen.
+              Hier kannst du Vorname, Name und Ortswehr selbst pflegen.
             </p>
           </div>
 
@@ -113,10 +134,20 @@ export default function ProfilPage() {
         </div>
 
         <div className="rounded-3xl border border-yellow-300/20 bg-[#0d1728]/85 p-6 space-y-5">
-          <Field label="Name" icon={<User className="h-4 w-4 text-yellow-300" />}>
+          <Field label="Vorname" icon={<User className="h-4 w-4 text-yellow-300" />}>
             <input
               type="text"
-              placeholder="Dein Name"
+              placeholder="Dein Vorname"
+              value={vorname}
+              onChange={(e) => setVorname(e.target.value)}
+              className="w-full bg-transparent text-white outline-none placeholder:text-slate-500"
+            />
+          </Field>
+
+          <Field label="Nachname" icon={<User className="h-4 w-4 text-yellow-300" />}>
+            <input
+              type="text"
+              placeholder="Dein Nachname"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-transparent text-white outline-none placeholder:text-slate-500"
@@ -127,13 +158,20 @@ export default function ProfilPage() {
             label="Ortswehr"
             icon={<MapPin className="h-4 w-4 text-yellow-300" />}
           >
-            <input
-              type="text"
-              placeholder="z. B. Ortswehr Felm"
+            <select
               value={ortswehr}
               onChange={(e) => setOrtswehr(e.target.value)}
-              className="w-full bg-transparent text-white outline-none placeholder:text-slate-500"
-            />
+              className="w-full bg-transparent text-white outline-none"
+            >
+              <option value="" className="bg-[#111c2f] text-slate-400">
+                Bitte wählen...
+              </option>
+              {ortswehrOptionen.map((option) => (
+                <option key={option} value={option} className="bg-[#111c2f] text-white">
+                  {option}
+                </option>
+              ))}
+            </select>
           </Field>
 
           <button
