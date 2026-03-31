@@ -398,20 +398,22 @@ export default function TeilnahmePage() {
               </Field>
 
               <Field label="Ortswehr" icon={<MapPin className="h-4 w-4 text-yellow-300" />}>
-                <select
+                <input
+                  list="ortswehr-optionen-teilnahme"
                   value={ortswehr}
                   onChange={(e) => setOrtswehr(e.target.value)}
-                  className="w-full bg-transparent text-white outline-none"
-                >
-                  <option value="" className="bg-[#111c2f] text-slate-400">
-                    Bitte wählen...
-                  </option>
+                  placeholder={
+                    ortswehrOptionen.length > 0
+                      ? "Ortswehr wählen oder tippen"
+                      : "Ortswehr eingeben"
+                  }
+                  className="w-full bg-transparent text-white outline-none placeholder:text-slate-500"
+                />
+                <datalist id="ortswehr-optionen-teilnahme">
                   {ortswehrOptionen.map((option) => (
-                    <option key={option} value={option} className="bg-[#111c2f] text-white">
-                      {option}
-                    </option>
+                    <option key={option} value={option} />
                   ))}
-                </select>
+                </datalist>
               </Field>
 
               <Field label="Teilnahme-Code" icon={<LogIn className="h-4 w-4 text-yellow-300" />}>
