@@ -244,23 +244,37 @@ export default function Dashboard() {
 
   const rollenWert = (terminId: string) => {
     const state = rollenState(terminId);
-    if (state.pa_traeger && state.maschinist) return "beide";
-    if (state.pa_traeger) return "pa_traeger";
-    if (state.maschinist) return "maschinist";
+    if (state.pa_traeger && state.maschinist) return "beide" as const;
+    if (state.pa_traeger) return "pa_traeger" as const;
+    if (state.maschinist) return "maschinist" as const;
     return null;
   };
 
-  const toggleRolle = (terminId: string, key: "pa_traeger" | "maschinist") => {
-    setRollenProTermin((prev) => {
-      const current = prev[terminId] || rollenState(terminId);
-      return {
-        ...prev,
-        [terminId]: {
-          ...current,
-          [key]: !current[key],
-        },
-      };
-    });
+  const toggleRolle = async (terminId: string, key: "pa_traeger" | "maschinist") => {
+    const current = rollenState(terminId);
+    const next = {
+      ...current,
+      [key]: !current[key],
+    };
+
+    setRollenProTermin((prev) => ({
+      ...prev,
+      [terminId]: next,
+    }));
+
+    const meine = eigeneRueckmeldung(terminId);
+    if (!meine) return;
+
+    const nextRolle =
+      next.pa_traeger && next.maschinist
+        ? ("beide" as const)
+        : next.pa_traeger
+        ? ("pa_traeger" as const)
+        : next.maschinist
+        ? ("maschinist" as const)
+        : null;
+
+    await setAntwort(terminId, meine.status, nextRolle);
   };
 
   const alleAntworten = (terminId: string) =>
@@ -411,6 +425,7 @@ export default function Dashboard() {
           ) : (
             termine.map((t) => {
               const s = stats(t.id);
+              const eigeneStatus = eigeneRueckmeldung(t.id)?.status;
 
               return (
                 <div
@@ -468,7 +483,11 @@ export default function Dashboard() {
                         const rolle = rollenWert(t.id);
                         setAntwort(t.id, "ja", rolle);
                       }}
-                      className="rounded-2xl border border-green-400/25 bg-green-500/10 px-4 py-2 font-medium text-green-300 transition hover:bg-green-500/20"
+                      className={`rounded-2xl border px-4 py-2 font-medium transition ${
+                        eigeneStatus === "ja"
+                          ? "border-green-300 bg-green-500/35 text-white shadow-[0_0_20px_rgba(34,197,94,0.35)]"
+                          : "border-green-400/25 bg-green-500/10 text-green-300 hover:bg-green-500/20"
+                      }`}
                     >
                       Ja
                     </button>
@@ -477,7 +496,11 @@ export default function Dashboard() {
                         const rolle = rollenWert(t.id);
                         setAntwort(t.id, "nein", rolle);
                       }}
-                      className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-2 font-medium text-red-300 transition hover:bg-red-500/20"
+                      className={`rounded-2xl border px-4 py-2 font-medium transition ${
+                        eigeneStatus === "nein"
+                          ? "border-red-300 bg-red-500/35 text-white shadow-[0_0_20px_rgba(239,68,68,0.35)]"
+                          : "border-red-400/25 bg-red-500/10 text-red-300 hover:bg-red-500/20"
+                      }`}
                     >
                       Nein
                     </button>
@@ -486,7 +509,11 @@ export default function Dashboard() {
                         const rolle = rollenWert(t.id);
                         setAntwort(t.id, "unsicher", rolle);
                       }}
-                      className="rounded-2xl border border-yellow-300/25 bg-yellow-300/10 px-4 py-2 font-medium text-yellow-300 transition hover:bg-yellow-300/20"
+                      className={`rounded-2xl border px-4 py-2 font-medium transition ${
+                        eigeneStatus === "unsicher"
+                          ? "border-yellow-200 bg-yellow-300/35 text-white shadow-[0_0_20px_rgba(250,204,21,0.35)]"
+                          : "border-yellow-300/25 bg-yellow-300/10 text-yellow-300 hover:bg-yellow-300/20"
+                      }`}
                     >
                       Unsicher
                     </button>

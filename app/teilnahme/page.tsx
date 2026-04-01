@@ -183,22 +183,73 @@ export default function TeilnahmePage() {
 
   const rollenWert = (terminId: string) => {
     const s = rollenState(terminId);
-    if (s.pa_traeger && s.maschinist) return "beide";
-    if (s.pa_traeger) return "pa_traeger";
-    if (s.maschinist) return "maschinist";
+    if (s.pa_traeger && s.maschinist) return "beide" as const;
+    if (s.pa_traeger) return "pa_traeger" as const;
+    if (s.maschinist) return "maschinist" as const;
     return null;
   };
 
-  const toggleRolle = (terminId: string, key: "pa_traeger" | "maschinist") => {
-    setRollenProTermin((prev) => {
-      const current = prev[terminId] || rollenState(terminId);
-      return {
-        ...prev,
-        [terminId]: {
-          ...current,
-          [key]: !current[key],
+  const toggleRolle = async (terminId: string, key: "pa_traeger" | "maschinist") => {
+    const current = rollenState(terminId);
+    const next = {
+      ...current,
+      [key]: !current[key],
+    };
+
+    setRollenProTermin((prev) => ({
+      ...prev,
+      [terminId]: next,
+    }));
+
+    const meine = teilnehmerRueckmeldung(terminId);
+    if (!meine || !teilnehmer) return;
+
+    const nextRolle =
+      next.pa_traeger && next.maschinist
+        ? ("beide" as const)
+        : next.pa_traeger
+        ? ("pa_traeger" as const)
+        : next.maschinist
+        ? ("maschinist" as const)
+        : null;
+
+    const { error } = await supabase.from("rueckmeldungen").upsert(
+      {
+        termin_id: terminId,
+        profile_id: null,
+        teilnehmer_id: teilnehmer.id,
+        teilnehmer_vorname: teilnehmer.vorname,
+        teilnehmer_name: teilnehmer.name,
+        teilnehmer_ortswehr: teilnehmer.ortswehr,
+        status: meine.status,
+        rolle: nextRolle,
+      },
+      { onConflict: "termin_id,teilnehmer_id" }
+    );
+
+    if (error) {
+      setFehler("Fehler beim Speichern: " + error.message);
+      return;
+    }
+
+    setRueckmeldungen((prev) => {
+      const ohneMich = prev.filter(
+        (r) => !(r.termin_id === terminId && r.teilnehmer_id === teilnehmer.id)
+      );
+
+      return [
+        ...ohneMich,
+        {
+          termin_id: terminId,
+          teilnehmer_id: teilnehmer.id,
+          profile_id: null,
+          teilnehmer_vorname: teilnehmer.vorname,
+          teilnehmer_name: teilnehmer.name,
+          teilnehmer_ortswehr: teilnehmer.ortswehr,
+          status: meine.status,
+          rolle: nextRolle,
         },
-      };
+      ];
     });
   };
 
@@ -517,21 +568,33 @@ export default function TeilnahmePage() {
                         <button
                           onClick={() => setAntwort(t.id, "ja")}
                           disabled={speichern}
-                          className="rounded-2xl border border-green-400/25 bg-green-500/10 px-4 py-2 font-medium text-green-300"
+                          className={`rounded-2xl border px-4 py-2 font-medium transition ${
+                            meine?.status === "ja"
+                              ? "border-green-300 bg-green-500/35 text-white shadow-[0_0_20px_rgba(34,197,94,0.35)]"
+                              : "border-green-400/25 bg-green-500/10 text-green-300 hover:bg-green-500/20"
+                          }`}
                         >
                           Ja
                         </button>
                         <button
                           onClick={() => setAntwort(t.id, "nein")}
                           disabled={speichern}
-                          className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-2 font-medium text-red-300"
+                          className={`rounded-2xl border px-4 py-2 font-medium transition ${
+                            meine?.status === "nein"
+                              ? "border-red-300 bg-red-500/35 text-white shadow-[0_0_20px_rgba(239,68,68,0.35)]"
+                              : "border-red-400/25 bg-red-500/10 text-red-300 hover:bg-red-500/20"
+                          }`}
                         >
                           Nein
                         </button>
                         <button
                           onClick={() => setAntwort(t.id, "unsicher")}
                           disabled={speichern}
-                          className="rounded-2xl border border-yellow-300/25 bg-yellow-300/10 px-4 py-2 font-medium text-yellow-300"
+                          className={`rounded-2xl border px-4 py-2 font-medium transition ${
+                            meine?.status === "unsicher"
+                              ? "border-yellow-200 bg-yellow-300/35 text-white shadow-[0_0_20px_rgba(250,204,21,0.35)]"
+                              : "border-yellow-300/25 bg-yellow-300/10 text-yellow-300 hover:bg-yellow-300/20"
+                          }`}
                         >
                           Unsicher
                         </button>
