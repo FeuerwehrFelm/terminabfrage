@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   title: "Gemeindefeuerwehr Felm",
   description: "Rückmeldungen zu Diensten und Terminen der Gemeindefeuerwehr Felm.",
   manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/icon.png",
+    apple: "/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
