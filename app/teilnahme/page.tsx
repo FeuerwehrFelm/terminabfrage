@@ -431,9 +431,9 @@ export default function TeilnahmePage() {
               Gemeindefeuerwehr Felm
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold">Teilnahme ohne Login</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">Terminübersicht</h1>
           <p className="mt-2 text-slate-300 text-sm md:text-base">
-            Name, Ortswehr und Teilnahme-Code eingeben, dann direkt Rückmeldungen senden.
+            Bitte gib an, ob du kommst und welche Funktion du übernehmen kannst.
           </p>
         </div>
 
@@ -670,7 +670,7 @@ export default function TeilnahmePage() {
                                     </Badge>
                                   </div>
                                   <div className="mt-2 text-xs text-slate-300">
-                                    Rolle:{" "}
+                                    Funktion:{" "}
                                     {r.rolle === "beide"
                                       ? "PA-Träger + Maschinist"
                                       : r.rolle === "maschinist"

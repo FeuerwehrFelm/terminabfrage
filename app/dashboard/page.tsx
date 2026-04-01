@@ -362,7 +362,7 @@ export default function Dashboard() {
           <InfoCard
             icon={<Mail className="h-4 w-4 text-yellow-300" />}
             label={mode === "auth" ? "E-Mail" : "Modus"}
-            value={mode === "auth" ? userEmail : "Teilnahme ohne Login"}
+            value={mode === "auth" ? userEmail : "Terminübersicht"}
           />
           <InfoCard
             icon={<User className="h-4 w-4 text-yellow-300" />}
@@ -387,7 +387,7 @@ export default function Dashboard() {
         </div>
 
         <div className="mb-6 rounded-2xl border border-yellow-300/20 bg-[#0d1728]/85 p-5">
-          <div className="text-sm text-slate-300">Rolle wird pro Termin ausgewählt.</div>
+          <div className="text-sm text-slate-300">Funktion wird pro Termin ausgewählt.</div>
         </div>
 
         <div className="space-y-6">
@@ -496,7 +496,7 @@ export default function Dashboard() {
                     <div className="text-sm text-slate-400">Deine Antwort</div>
                     <div className="mt-1 text-lg font-semibold text-white">{eigeneAntwort(t.id)}</div>
                     <div className="mt-2 text-sm text-slate-300">
-                      Rolle:{" "}
+                      Funktion:{" "}
                       {eigeneRueckmeldung(t.id)?.rolle === "beide"
                         ? "PA-Träger + Maschinist"
                         : eigeneRueckmeldung(t.id)?.rolle === "maschinist"
