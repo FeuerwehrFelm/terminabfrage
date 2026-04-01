@@ -48,7 +48,7 @@ export default function Home() {
 
         {/* Footer */}
         <p className="mt-12 text-sm text-slate-500">
-          Feuerwehr Terminverwaltung • modern & einfach
+          Feuerwehr Terminverwaltung • modern & einfach • © Justus Hamkens
         </p>
 
       </div>
