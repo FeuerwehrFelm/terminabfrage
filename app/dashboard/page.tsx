@@ -325,7 +325,7 @@ export default function Dashboard() {
               <div className="mb-2 flex items-center gap-2 text-yellow-300">
                 <Flame className="h-4 w-4" />
                 <span className="text-sm font-semibold tracking-[0.2em] uppercase">
-                  Terminabfrage
+                  Gemeindefeuerwehr Felm
                 </span>
               </div>
               <h1 className="text-3xl font-bold tracking-tight">Rückmeldungen zu Terminen</h1>

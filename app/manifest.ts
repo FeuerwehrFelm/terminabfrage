@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Terminabfrage Gemeindefeuerwehr Felm",
-    short_name: "Terminabfrage",
+    name: "Gemeindefeuerwehr Felm",
+    short_name: "GF Felm",
     description: "Rueckmeldungen zu Diensten und Terminen der Gemeindefeuerwehr Felm.",
     start_url: "/teilnahme",
     scope: "/",

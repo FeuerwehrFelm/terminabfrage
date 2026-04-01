@@ -428,7 +428,7 @@ export default function TeilnahmePage() {
           <div className="mb-2 flex items-center gap-2 text-yellow-300">
             <Flame className="h-4 w-4" />
             <span className="text-sm font-semibold tracking-[0.2em] uppercase">
-              Terminabfrage
+              Gemeindefeuerwehr Felm
             </span>
           </div>
           <h1 className="text-2xl md:text-3xl font-bold">Teilnahme ohne Login</h1>

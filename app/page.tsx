@@ -18,7 +18,7 @@ export default function Home() {
 
         {/* Titel */}
         <h1 className="text-4xl md:text-5xl font-bold text-yellow-300 tracking-tight">
-          Terminabfrage
+          Gemeindefeuerwehr Felm
         </h1>
 
         <p className="mt-4 max-w-xl text-slate-400 text-lg">

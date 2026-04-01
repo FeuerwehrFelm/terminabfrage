@@ -8,13 +8,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Terminabfrage",
-  description: "Terminabfrage für Ortswehren",
+  title: "Gemeindefeuerwehr Felm",
+  description: "Rückmeldungen zu Diensten und Terminen der Gemeindefeuerwehr Felm.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Terminabfrage",
+    title: "Gemeindefeuerwehr Felm",
   },
 };
 

@@ -40,7 +40,7 @@ export default function LoginPage() {
               <Flame className="h-8 w-8 text-yellow-300" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-yellow-300">
-              Terminabfrage
+              Gemeindefeuerwehr Felm
             </h1>
             <p className="mt-2 text-sm text-slate-400">
               Bitte mit deinem Benutzerkonto anmelden
