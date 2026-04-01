@@ -329,13 +329,19 @@ export default function TeilnahmePage() {
       return;
     }
 
-    const { data: existing } = await supabase
-      .from("teilnehmer")
-      .select("id, vorname, name, ortswehr")
-      .eq("vorname", v)
-      .eq("name", n)
-      .eq("ortswehr", o)
-      .maybeSingle();
+    const findExistingTeilnehmer = async () => {
+      const { data } = await supabase
+        .from("teilnehmer")
+        .select("id, vorname, name, ortswehr")
+        .ilike("vorname", v)
+        .ilike("name", n)
+        .ilike("ortswehr", o)
+        .maybeSingle();
+
+      return (data as Teilnehmer | null) || null;
+    };
+
+    const existing = await findExistingTeilnehmer();
 
     let person = existing as Teilnehmer | null;
 
@@ -350,14 +356,26 @@ export default function TeilnahmePage() {
         .select("id, vorname, name, ortswehr")
         .single();
 
-      if (createError || !created) {
+      if (createError) {
+        if ((createError as { code?: string }).code === "23505") {
+          person = await findExistingTeilnehmer();
+        } else {
+          setEintrittLaden(false);
+          setFehler("Teilnahme konnte nicht gestartet werden: " + createError.message);
+          return;
+        }
+      }
+
+      if (!person && !created) {
         setEintrittLaden(false);
-        setFehler("Teilnahme konnte nicht gestartet werden: " + createError?.message);
+        setFehler("Teilnahme konnte nicht gestartet werden.");
         return;
       }
 
-      person = created as Teilnehmer;
-      setAlleTeilnehmer((prev) => [...prev, person as Teilnehmer]);
+      if (!person) {
+        person = created as Teilnehmer;
+        setAlleTeilnehmer((prev) => [...prev, person as Teilnehmer]);
+      }
     }
 
     if (!person) {
