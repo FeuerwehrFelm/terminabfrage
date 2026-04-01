@@ -3,14 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import {
-  CheckCircle2,
-  CircleHelp,
   Flame,
   LogOut,
   User,
   Mail,
   MapPin,
-  XCircle,
   Shield,
   Truck,
   Settings,
@@ -289,12 +286,6 @@ export default function Dashboard() {
     };
   };
 
-  const gesamt = {
-    ja: rueckmeldungen.filter((r) => r.status === "ja").length,
-    nein: rueckmeldungen.filter((r) => r.status === "nein").length,
-    unsicher: rueckmeldungen.filter((r) => r.status === "unsicher").length,
-  };
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
@@ -397,24 +388,6 @@ export default function Dashboard() {
 
         <div className="mb-6 rounded-2xl border border-yellow-300/20 bg-[#0d1728]/85 p-5">
           <div className="text-sm text-slate-300">Rolle wird pro Termin ausgewählt.</div>
-        </div>
-
-        <div className="mb-6 grid gap-4 md:grid-cols-3">
-          <StatCard
-            label="Zusagen gesamt"
-            value={gesamt.ja}
-            icon={<CheckCircle2 className="h-5 w-5 text-green-400" />}
-          />
-          <StatCard
-            label="Absagen gesamt"
-            value={gesamt.nein}
-            icon={<XCircle className="h-5 w-5 text-red-400" />}
-          />
-          <StatCard
-            label="Unsicher gesamt"
-            value={gesamt.unsicher}
-            icon={<CircleHelp className="h-5 w-5 text-yellow-300" />}
-          />
         </div>
 
         <div className="space-y-6">
@@ -625,26 +598,6 @@ function InfoCard({
         <span>{label}</span>
       </div>
       <div className="font-semibold text-white">{value}</div>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: number;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-yellow-300/20 bg-[#0d1728]/85 p-5">
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-slate-400">{label}</div>
-        {icon}
-      </div>
-      <div className="mt-2 text-4xl font-bold text-white">{value}</div>
     </div>
   );
 }
