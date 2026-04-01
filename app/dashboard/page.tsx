@@ -225,8 +225,6 @@ export default function Dashboard() {
     );
   };
 
-  const eigeneAntwort = (terminId: string) => eigeneRueckmeldung(terminId)?.status || "keine";
-
   const rollenState = (terminId: string) => {
     const lokal = rollenProTermin[terminId];
     if (lokal) return lokal;
@@ -490,21 +488,6 @@ export default function Dashboard() {
                     >
                       Unsicher
                     </button>
-                  </div>
-
-                  <div className="mb-5 rounded-2xl border border-yellow-300/15 bg-[#111c2f] p-4">
-                    <div className="text-sm text-slate-400">Deine Antwort</div>
-                    <div className="mt-1 text-lg font-semibold text-white">{eigeneAntwort(t.id)}</div>
-                    <div className="mt-2 text-sm text-slate-300">
-                      Funktion:{" "}
-                      {eigeneRueckmeldung(t.id)?.rolle === "beide"
-                        ? "PA-Träger + Maschinist"
-                        : eigeneRueckmeldung(t.id)?.rolle === "maschinist"
-                        ? "Maschinist"
-                        : eigeneRueckmeldung(t.id)?.rolle === "pa_traeger"
-                        ? "PA-Träger"
-                        : "-"}
-                    </div>
                   </div>
 
                   <div>

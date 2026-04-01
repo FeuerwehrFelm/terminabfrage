@@ -618,11 +618,6 @@ export default function TeilnahmePage() {
                         </button>
                       </div>
 
-                      <div className="mt-4 rounded-2xl border border-yellow-300/10 bg-[#111c2f] p-3">
-                        <div className="text-sm text-slate-400">Deine Antwort</div>
-                        <div className="font-semibold text-white">{meine?.status || "keine"}</div>
-                      </div>
-
                       <div className="mt-4">
                         <div className="mb-2 text-sm font-semibold text-yellow-300">
                           Alle Rückmeldungen
