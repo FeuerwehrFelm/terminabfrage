@@ -588,6 +588,16 @@ export default function TeilnahmePage() {
                                       {r.status}
                                     </Badge>
                                   </div>
+                                  <div className="mt-2 text-xs text-slate-300">
+                                    Rolle:{" "}
+                                    {r.rolle === "beide"
+                                      ? "PA-Träger + Maschinist"
+                                      : r.rolle === "maschinist"
+                                      ? "Maschinist"
+                                      : r.rolle === "pa_traeger"
+                                      ? "PA-Träger"
+                                      : "keine"}
+                                  </div>
                                 </div>
                               );
                             })
