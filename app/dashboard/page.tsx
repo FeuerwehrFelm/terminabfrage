@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import {
+  Archive,
   Flame,
   LogOut,
   User,
@@ -76,6 +77,10 @@ export default function Dashboard() {
   const teilnehmerById = useMemo(() => {
     return Object.fromEntries(alleTeilnehmer.map((t) => [t.id, t]));
   }, [alleTeilnehmer]);
+
+  const heute = new Date().toLocaleDateString("sv-SE");
+  const aktiveTermine = termine.filter((termin) => termin.datum >= heute);
+  const archivTermine = termine.filter((termin) => termin.datum < heute);
 
   const fullName = (p?: Profile | null) =>
     p ? `${p.vorname || ""} ${p.name || ""}`.trim() || "Unbekannt" : "Unbekannt";
@@ -389,12 +394,12 @@ export default function Dashboard() {
         </div>
 
         <div className="space-y-6">
-          {termine.length === 0 ? (
+          {aktiveTermine.length === 0 ? (
             <div className="rounded-3xl border border-yellow-300/20 bg-[#0d1728]/80 p-8 text-center text-slate-400">
-              Noch keine Termine vorhanden.
+              Keine aktuellen Termine vorhanden.
             </div>
           ) : (
-            termine.map((t) => {
+            aktiveTermine.map((t) => {
               const s = stats(t.id);
               const eigeneStatus = eigeneRueckmeldung(t.id)?.status;
 
@@ -560,6 +565,48 @@ export default function Dashboard() {
             })
           )}
         </div>
+
+        {archivTermine.length > 0 && (
+          <details className="mt-6 rounded-3xl border border-slate-500/20 bg-[#0d1728]/70 p-5">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-slate-200">
+              <span className="inline-flex items-center gap-2 font-semibold">
+                <Archive className="h-4 w-4 text-yellow-300" />
+                Archiv
+              </span>
+              <span className="rounded-full border border-slate-500/25 px-3 py-1 text-xs text-slate-300">
+                {archivTermine.length}
+              </span>
+            </summary>
+
+            <div className="mt-4 space-y-3">
+              {archivTermine.map((t) => {
+                const s = stats(t.id);
+
+                return (
+                  <div
+                    key={t.id}
+                    className="rounded-2xl border border-slate-500/20 bg-[#111c2f]/80 p-4"
+                  >
+                    <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                      <div>
+                        <h2 className="font-semibold text-slate-100">{t.titel}</h2>
+                        <p className="mt-1 text-sm text-slate-400">
+                          {t.datum} {formatUhrzeit(t.uhrzeit)}
+                        </p>
+                        {t.hinweis && <p className="mt-2 text-sm text-slate-400">{t.hinweis}</p>}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge tone="green">Ja: {s.ja}</Badge>
+                        <Badge tone="red">Nein: {s.nein}</Badge>
+                        <Badge tone="yellow">Unsicher: {s.unsicher}</Badge>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </details>
+        )}
       </div>
     </div>
   );
