@@ -298,12 +298,12 @@ export default function TeilnahmePage() {
 
   return (
     <div className="min-h-screen bg-[#081120] text-white relative overflow-hidden p-4 md:p-6">
-      <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-yellow-300/10 blur-[120px]" />
+      <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-[#f4ff00]/10 blur-[120px]" />
       <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-blue-500/10 blur-[140px]" />
 
       <div className="relative z-10 mx-auto w-full max-w-5xl space-y-5">
-        <div className="rounded-3xl border border-yellow-300/25 bg-gradient-to-r from-[#0f1d34] to-[#132544] p-5 md:p-6">
-          <div className="mb-2 flex items-center gap-2 text-yellow-300">
+        <div className="rounded-3xl border border-[#f4ff00]/25 bg-gradient-to-r from-[#0f1d34] to-[#132544] p-5 md:p-6">
+          <div className="mb-2 flex items-center gap-2 text-[#f4ff00]">
             <Flame className="h-4 w-4" />
             <span className="text-sm font-semibold tracking-[0.2em] uppercase">
               Gemeindefeuerwehr Felm
@@ -316,9 +316,9 @@ export default function TeilnahmePage() {
         </div>
 
         {!teilnehmer ? (
-          <div className="rounded-3xl border border-yellow-300/20 bg-[#0d1728]/90 p-5 md:p-6">
+          <div className="rounded-3xl border border-[#f4ff00]/20 bg-[#0d1728]/90 p-5 md:p-6">
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="Vorname" icon={<User className="h-4 w-4 text-yellow-300" />}>
+              <Field label="Vorname" icon={<User className="h-4 w-4 text-[#f4ff00]" />}>
                 <input
                   value={vorname}
                   onChange={(e) => setVorname(e.target.value)}
@@ -327,7 +327,7 @@ export default function TeilnahmePage() {
                 />
               </Field>
 
-              <Field label="Nachname" icon={<User className="h-4 w-4 text-yellow-300" />}>
+              <Field label="Nachname" icon={<User className="h-4 w-4 text-[#f4ff00]" />}>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -336,7 +336,7 @@ export default function TeilnahmePage() {
                 />
               </Field>
 
-              <Field label="Ortswehr" icon={<MapPin className="h-4 w-4 text-yellow-300" />}>
+              <Field label="Ortswehr" icon={<MapPin className="h-4 w-4 text-[#f4ff00]" />}>
                 <select
                   value={ortswehr}
                   onChange={(e) => setOrtswehr(e.target.value)}
@@ -353,7 +353,7 @@ export default function TeilnahmePage() {
                 </select>
               </Field>
 
-              <Field label="Teilnahme-Code" icon={<LogIn className="h-4 w-4 text-yellow-300" />}>
+              <Field label="Teilnahme-Code" icon={<LogIn className="h-4 w-4 text-[#f4ff00]" />}>
                 <input
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
@@ -372,14 +372,14 @@ export default function TeilnahmePage() {
             <button
               onClick={handleTeilnahmeStart}
               disabled={eintrittLaden}
-              className="mt-5 w-full rounded-2xl bg-yellow-300 px-4 py-3 font-semibold text-[#081120] transition hover:bg-yellow-200 disabled:opacity-60"
+              className="mt-5 w-full rounded-2xl bg-[#f4ff00] px-4 py-3 font-semibold text-[#081120] transition hover:bg-[#fbff9a] disabled:opacity-60"
             >
               {eintrittLaden ? "Prüfe..." : "Teilnahme starten"}
             </button>
           </div>
         ) : (
           <>
-            <div className="rounded-2xl border border-yellow-300/20 bg-[#0d1728]/90 p-4 md:p-5">
+            <div className="rounded-2xl border border-[#f4ff00]/20 bg-[#0d1728]/90 p-4 md:p-5">
               <div>
                 <div className="text-sm text-slate-400">Angemeldet als</div>
                 <div className="font-semibold text-white">
@@ -396,7 +396,7 @@ export default function TeilnahmePage() {
 
             <div className="space-y-4">
               {aktiveTermine.length === 0 ? (
-                <div className="rounded-3xl border border-yellow-300/20 bg-[#0d1728]/80 p-6 text-center text-slate-400">
+                <div className="rounded-3xl border border-[#f4ff00]/20 bg-[#0d1728]/80 p-6 text-center text-slate-400">
                   Keine aktuellen Termine vorhanden.
                 </div>
               ) : (
@@ -407,11 +407,11 @@ export default function TeilnahmePage() {
                   return (
                     <div
                       key={t.id}
-                      className="rounded-3xl border border-yellow-300/20 bg-[#0d1728]/90 p-4 md:p-6"
+                      className="rounded-3xl border border-[#f4ff00]/20 bg-[#0d1728]/90 p-4 md:p-6"
                     >
                       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                         <div>
-                          <h2 className="text-xl md:text-2xl font-bold text-yellow-300">
+                          <h2 className="text-xl md:text-2xl font-bold text-[#f4ff00]">
                             {t.titel}
                           </h2>
                           <div className="mt-2">
@@ -436,7 +436,7 @@ export default function TeilnahmePage() {
                           onClick={() => toggleRolle(t.id, "pa_traeger")}
                           className={`rounded-2xl border px-4 py-2 text-sm font-medium transition ${
                             rollenState(t.id).pa_traeger
-                              ? "border-yellow-300/25 bg-yellow-300/10 text-yellow-300"
+                              ? "border-[#f4ff00]/25 bg-[#f4ff00]/10 text-[#f4ff00]"
                               : "border-slate-500/30 bg-slate-700/10 text-slate-300"
                           }`}
                         >
@@ -449,7 +449,7 @@ export default function TeilnahmePage() {
                           onClick={() => toggleRolle(t.id, "maschinist")}
                           className={`rounded-2xl border px-4 py-2 text-sm font-medium transition ${
                             rollenState(t.id).maschinist
-                              ? "border-yellow-300/25 bg-yellow-300/10 text-yellow-300"
+                              ? "border-[#f4ff00]/25 bg-[#f4ff00]/10 text-[#f4ff00]"
                               : "border-slate-500/30 bg-slate-700/10 text-slate-300"
                           }`}
                         >
@@ -488,8 +488,8 @@ export default function TeilnahmePage() {
                           disabled={speichern}
                           className={`rounded-2xl border px-4 py-2 font-medium transition ${
                             meine?.status === "unsicher"
-                              ? "border-yellow-200 bg-yellow-300/35 text-white shadow-[0_0_20px_rgba(250,204,21,0.35)]"
-                              : "border-yellow-300/25 bg-yellow-300/10 text-yellow-300 hover:bg-yellow-300/20"
+                              ? "border-[#fbff9a] bg-[#f4ff00]/35 text-white shadow-[0_0_20px_rgba(244,255,0,0.35)]"
+                              : "border-[#f4ff00]/25 bg-[#f4ff00]/10 text-[#f4ff00] hover:bg-[#f4ff00]/20"
                           }`}
                         >
                           Unsicher
@@ -497,12 +497,12 @@ export default function TeilnahmePage() {
                       </div>
 
                       <div className="mt-4">
-                        <div className="mb-2 text-sm font-semibold text-yellow-300">
+                        <div className="mb-2 text-sm font-semibold text-[#f4ff00]">
                           Alle Rückmeldungen
                         </div>
                         <div className="space-y-2">
                           {alleAntworten(t.id).length === 0 ? (
-                            <div className="rounded-xl border border-yellow-300/10 bg-[#111c2f] p-3 text-slate-400">
+                            <div className="rounded-xl border border-[#f4ff00]/10 bg-[#111c2f] p-3 text-slate-400">
                               Noch keine Rückmeldungen
                             </div>
                           ) : (
@@ -523,7 +523,7 @@ export default function TeilnahmePage() {
                               return (
                                 <div
                                   key={`${t.id}-${i}`}
-                                  className="rounded-xl border border-yellow-300/10 bg-[#111c2f] p-3"
+                                  className="rounded-xl border border-[#f4ff00]/10 bg-[#111c2f] p-3"
                                 >
                                   <div className="flex items-center justify-between gap-3">
                                     <div className="text-sm text-white">
@@ -568,7 +568,7 @@ export default function TeilnahmePage() {
               <details className="rounded-3xl border border-slate-500/20 bg-[#0d1728]/70 p-4 md:p-5">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-slate-200">
                   <span className="inline-flex items-center gap-2 font-semibold">
-                    <Archive className="h-4 w-4 text-yellow-300" />
+                    <Archive className="h-4 w-4 text-[#f4ff00]" />
                     Archiv
                   </span>
                   <span className="rounded-full border border-slate-500/25 px-3 py-1 text-xs text-slate-300">
@@ -630,7 +630,7 @@ function Field({
   return (
     <div>
       <label className="mb-2 block text-sm font-medium text-slate-200">{label}</label>
-      <div className="flex items-center gap-3 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3">
+      <div className="flex items-center gap-3 rounded-2xl border border-[#f4ff00]/20 bg-[#111c2f] px-4 py-3">
         {icon}
         <div className="w-full">{children}</div>
       </div>
@@ -650,7 +650,7 @@ function Badge({
       ? "border-green-400/25 bg-green-500/10 text-green-300"
       : tone === "red"
       ? "border-red-400/25 bg-red-500/10 text-red-300"
-      : "border-yellow-300/25 bg-yellow-300/10 text-yellow-300";
+      : "border-[#f4ff00]/25 bg-[#f4ff00]/10 text-[#f4ff00]";
 
   return (
     <span className={`rounded-full border px-3 py-1 text-xs md:text-sm font-medium ${styles}`}>

@@ -72,13 +72,13 @@ export default function ProfilPage() {
 
   return (
     <div className="min-h-screen bg-[#081120] text-white relative overflow-hidden p-6">
-      <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-yellow-300/10 blur-[120px]" />
+      <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-[#f4ff00]/10 blur-[120px]" />
       <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-blue-500/10 blur-[140px]" />
 
       <div className="relative z-10 mx-auto max-w-3xl">
         <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
-          <div className="rounded-3xl border border-yellow-300/25 bg-[#0d1728]/85 p-6 shadow-[0_0_40px_rgba(250,204,21,0.08)]">
-            <div className="mb-2 flex items-center gap-2 text-yellow-300">
+          <div className="rounded-3xl border border-[#f4ff00]/25 bg-[#0d1728]/85 p-6 shadow-[0_0_40px_rgba(244,255,0,0.08)]">
+            <div className="mb-2 flex items-center gap-2 text-[#f4ff00]">
               <User className="h-5 w-5" />
               <span className="text-sm font-semibold uppercase tracking-[0.2em]">
                 Profil
@@ -92,15 +92,15 @@ export default function ProfilPage() {
 
           <button
             onClick={() => (window.location.href = "/dashboard")}
-            className="flex items-center gap-2 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-yellow-300/40 hover:bg-[#16243b]"
+            className="flex items-center gap-2 rounded-2xl border border-[#f4ff00]/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-[#f4ff00]/40 hover:bg-[#16243b]"
           >
-            <ArrowLeft className="h-4 w-4 text-yellow-300" />
+            <ArrowLeft className="h-4 w-4 text-[#f4ff00]" />
             Zurück
           </button>
         </div>
 
-        <div className="rounded-3xl border border-yellow-300/20 bg-[#0d1728]/85 p-6 space-y-5">
-          <Field label="Vorname" icon={<User className="h-4 w-4 text-yellow-300" />}>
+        <div className="rounded-3xl border border-[#f4ff00]/20 bg-[#0d1728]/85 p-6 space-y-5">
+          <Field label="Vorname" icon={<User className="h-4 w-4 text-[#f4ff00]" />}>
             <input
               type="text"
               placeholder="Dein Vorname"
@@ -110,7 +110,7 @@ export default function ProfilPage() {
             />
           </Field>
 
-          <Field label="Nachname" icon={<User className="h-4 w-4 text-yellow-300" />}>
+          <Field label="Nachname" icon={<User className="h-4 w-4 text-[#f4ff00]" />}>
             <input
               type="text"
               placeholder="Dein Nachname"
@@ -122,7 +122,7 @@ export default function ProfilPage() {
 
           <Field
             label="Ortswehr"
-            icon={<MapPin className="h-4 w-4 text-yellow-300" />}
+            icon={<MapPin className="h-4 w-4 text-[#f4ff00]" />}
           >
             <select
               value={ortswehr}
@@ -143,7 +143,7 @@ export default function ProfilPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-yellow-300 px-4 py-3 font-semibold text-[#081120] transition hover:bg-yellow-200 disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#f4ff00] px-4 py-3 font-semibold text-[#081120] transition hover:bg-[#fbff9a] disabled:opacity-60"
           >
             <Save className="h-4 w-4" />
             {saving ? "Speichert..." : "Profil speichern"}
@@ -168,7 +168,7 @@ function Field({
       <label className="mb-2 block text-sm font-medium text-slate-200">
         {label}
       </label>
-      <div className="flex items-center gap-3 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3 focus-within:border-yellow-300/50">
+      <div className="flex items-center gap-3 rounded-2xl border border-[#f4ff00]/20 bg-[#111c2f] px-4 py-3 focus-within:border-[#f4ff00]/50">
         {icon}
         <div className="w-full">{children}</div>
       </div>

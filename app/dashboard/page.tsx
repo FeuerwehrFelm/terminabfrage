@@ -263,14 +263,14 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#081120] text-white relative overflow-hidden p-6">
-      <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-yellow-300/10 blur-[120px]" />
+      <div className="absolute -top-24 -left-24 h-80 w-80 rounded-full bg-[#f4ff00]/10 blur-[120px]" />
       <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-blue-500/10 blur-[140px]" />
 
       <div className="relative z-10 mx-auto max-w-6xl">
-        <div className="mb-6 rounded-3xl border border-yellow-300/25 bg-gradient-to-r from-[#0f1d34] to-[#132544] p-6 shadow-[0_0_40px_rgba(250,204,21,0.08)]">
+        <div className="mb-6 rounded-3xl border border-[#f4ff00]/25 bg-gradient-to-r from-[#0f1d34] to-[#132544] p-6 shadow-[0_0_40px_rgba(244,255,0,0.08)]">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="mb-2 flex items-center gap-2 text-yellow-300">
+              <div className="mb-2 flex items-center gap-2 text-[#f4ff00]">
                 <Flame className="h-4 w-4" />
                 <span className="text-sm font-semibold tracking-[0.2em] uppercase">
                   Gemeindefeuerwehr Felm
@@ -288,26 +288,26 @@ export default function Dashboard() {
                 <>
                   <button
                     onClick={() => (window.location.href = "/profil")}
-                    className="flex items-center gap-2 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-yellow-300/40 hover:bg-[#16243b]"
+                    className="flex items-center gap-2 rounded-2xl border border-[#f4ff00]/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-[#f4ff00]/40 hover:bg-[#16243b]"
                   >
-                    <Settings className="h-4 w-4 text-yellow-300" />
+                    <Settings className="h-4 w-4 text-[#f4ff00]" />
                     Profil
                   </button>
 
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-2 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-yellow-300/40 hover:bg-[#16243b]"
+                    className="flex items-center gap-2 rounded-2xl border border-[#f4ff00]/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-[#f4ff00]/40 hover:bg-[#16243b]"
                   >
-                    <LogOut className="h-4 w-4 text-yellow-300" />
+                    <LogOut className="h-4 w-4 text-[#f4ff00]" />
                     Logout
                   </button>
                 </>
               ) : (
                 <button
                   onClick={handleTeilnehmerLogout}
-                  className="flex items-center gap-2 rounded-2xl border border-yellow-300/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-yellow-300/40 hover:bg-[#16243b]"
+                  className="flex items-center gap-2 rounded-2xl border border-[#f4ff00]/20 bg-[#111c2f] px-4 py-3 font-medium text-white transition hover:border-[#f4ff00]/40 hover:bg-[#16243b]"
                 >
-                  <LogOut className="h-4 w-4 text-yellow-300" />
+                  <LogOut className="h-4 w-4 text-[#f4ff00]" />
                   Person wechseln
                 </button>
               )}
@@ -317,12 +317,12 @@ export default function Dashboard() {
 
         <div className="mb-6 grid gap-4 md:grid-cols-3">
           <InfoCard
-            icon={<Mail className="h-4 w-4 text-yellow-300" />}
+            icon={<Mail className="h-4 w-4 text-[#f4ff00]" />}
             label={mode === "auth" ? "E-Mail" : "Modus"}
             value={mode === "auth" ? userEmail : "Terminübersicht"}
           />
           <InfoCard
-            icon={<User className="h-4 w-4 text-yellow-300" />}
+            icon={<User className="h-4 w-4 text-[#f4ff00]" />}
             label="Name"
             value={
               mode === "auth"
@@ -333,7 +333,7 @@ export default function Dashboard() {
             }
           />
           <InfoCard
-            icon={<MapPin className="h-4 w-4 text-yellow-300" />}
+            icon={<MapPin className="h-4 w-4 text-[#f4ff00]" />}
             label="Ortswehr"
             value={
               mode === "auth"
@@ -343,13 +343,13 @@ export default function Dashboard() {
           />
         </div>
 
-        <div className="mb-6 rounded-2xl border border-yellow-300/20 bg-[#0d1728]/85 p-5">
+        <div className="mb-6 rounded-2xl border border-[#f4ff00]/20 bg-[#0d1728]/85 p-5">
           <div className="text-sm text-slate-300">Funktion wird pro Termin ausgewählt.</div>
         </div>
 
         <div className="space-y-6">
           {aktiveTermine.length === 0 ? (
-            <div className="rounded-3xl border border-yellow-300/20 bg-[#0d1728]/80 p-8 text-center text-slate-400">
+            <div className="rounded-3xl border border-[#f4ff00]/20 bg-[#0d1728]/80 p-8 text-center text-slate-400">
               Keine aktuellen Termine vorhanden.
             </div>
           ) : (
@@ -360,11 +360,11 @@ export default function Dashboard() {
               return (
                 <div
                   key={t.id}
-                  className="rounded-3xl border border-yellow-300/20 bg-[#0d1728]/85 p-6 shadow-[0_0_30px_rgba(250,204,21,0.07)]"
+                  className="rounded-3xl border border-[#f4ff00]/20 bg-[#0d1728]/85 p-6 shadow-[0_0_30px_rgba(244,255,0,0.07)]"
                 >
                   <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div>
-                      <h2 className="text-2xl font-bold text-yellow-300">{t.titel}</h2>
+                      <h2 className="text-2xl font-bold text-[#f4ff00]">{t.titel}</h2>
                       <p className="mt-2 text-sm text-slate-400">
                         {t.datum} {formatUhrzeit(t.uhrzeit)}
                       </p>
@@ -383,8 +383,8 @@ export default function Dashboard() {
                       onClick={() => toggleRolle(t.id, "pa_traeger")}
                       className={`rounded-2xl border px-4 py-2 font-medium transition ${
                         rollenState(t.id).pa_traeger
-                          ? "border-yellow-300/25 bg-yellow-300/10 text-yellow-300"
-                          : "border-slate-500/30 bg-slate-700/10 text-slate-300 hover:border-yellow-300/25"
+                          ? "border-[#f4ff00]/25 bg-[#f4ff00]/10 text-[#f4ff00]"
+                          : "border-slate-500/30 bg-slate-700/10 text-slate-300 hover:border-[#f4ff00]/25"
                       }`}
                     >
                       <span className="inline-flex items-center gap-2">
@@ -396,8 +396,8 @@ export default function Dashboard() {
                       onClick={() => toggleRolle(t.id, "maschinist")}
                       className={`rounded-2xl border px-4 py-2 font-medium transition ${
                         rollenState(t.id).maschinist
-                          ? "border-yellow-300/25 bg-yellow-300/10 text-yellow-300"
-                          : "border-slate-500/30 bg-slate-700/10 text-slate-300 hover:border-yellow-300/25"
+                          ? "border-[#f4ff00]/25 bg-[#f4ff00]/10 text-[#f4ff00]"
+                          : "border-slate-500/30 bg-slate-700/10 text-slate-300 hover:border-[#f4ff00]/25"
                       }`}
                     >
                       <span className="inline-flex items-center gap-2">
@@ -441,8 +441,8 @@ export default function Dashboard() {
                       }}
                       className={`rounded-2xl border px-4 py-2 font-medium transition ${
                         eigeneStatus === "unsicher"
-                          ? "border-yellow-200 bg-yellow-300/35 text-white shadow-[0_0_20px_rgba(250,204,21,0.35)]"
-                          : "border-yellow-300/25 bg-yellow-300/10 text-yellow-300 hover:bg-yellow-300/20"
+                          ? "border-[#fbff9a] bg-[#f4ff00]/35 text-white shadow-[0_0_20px_rgba(244,255,0,0.35)]"
+                          : "border-[#f4ff00]/25 bg-[#f4ff00]/10 text-[#f4ff00] hover:bg-[#f4ff00]/20"
                       }`}
                     >
                       Unsicher
@@ -450,10 +450,10 @@ export default function Dashboard() {
                   </div>
 
                   <div>
-                    <div className="mb-3 text-lg font-semibold text-yellow-300">Alle Rückmeldungen</div>
+                    <div className="mb-3 text-lg font-semibold text-[#f4ff00]">Alle Rückmeldungen</div>
 
                     {alleAntworten(t.id).length === 0 ? (
-                      <div className="rounded-2xl border border-yellow-300/10 bg-[#111c2f] p-4 text-slate-400">
+                      <div className="rounded-2xl border border-[#f4ff00]/10 bg-[#111c2f] p-4 text-slate-400">
                         Noch keine Rückmeldungen
                       </div>
                     ) : (
@@ -465,7 +465,7 @@ export default function Dashboard() {
                           return (
                             <div
                               key={i}
-                              className="rounded-2xl border border-yellow-300/10 bg-[#111c2f] px-4 py-3"
+                              className="rounded-2xl border border-[#f4ff00]/10 bg-[#111c2f] px-4 py-3"
                             >
                               <div className="flex items-center justify-between gap-3">
                                 <div>
@@ -499,7 +499,7 @@ export default function Dashboard() {
 
                               {r.rolle && (
                                 <div className="mt-3">
-                                  <span className="rounded-full border border-yellow-300/20 bg-yellow-300/10 px-2 py-1 text-xs font-medium text-yellow-300">
+                                  <span className="rounded-full border border-[#f4ff00]/20 bg-[#f4ff00]/10 px-2 py-1 text-xs font-medium text-[#f4ff00]">
                                     {r.rolle === "beide"
                                       ? "PA-Träger + Maschinist"
                                       : r.rolle === "maschinist"
@@ -524,7 +524,7 @@ export default function Dashboard() {
           <details className="mt-6 rounded-3xl border border-slate-500/20 bg-[#0d1728]/70 p-5">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-slate-200">
               <span className="inline-flex items-center gap-2 font-semibold">
-                <Archive className="h-4 w-4 text-yellow-300" />
+                <Archive className="h-4 w-4 text-[#f4ff00]" />
                 Archiv
               </span>
               <span className="rounded-full border border-slate-500/25 px-3 py-1 text-xs text-slate-300">
@@ -576,7 +576,7 @@ function InfoCard({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-yellow-300/20 bg-[#0d1728]/85 p-5">
+    <div className="rounded-2xl border border-[#f4ff00]/20 bg-[#0d1728]/85 p-5">
       <div className="mb-2 flex items-center gap-2 text-sm text-slate-400">
         {icon}
         <span>{label}</span>
@@ -598,7 +598,7 @@ function Badge({
       ? "border-green-400/25 bg-green-500/10 text-green-300"
       : tone === "red"
       ? "border-red-400/25 bg-red-500/10 text-red-300"
-      : "border-yellow-300/25 bg-yellow-300/10 text-yellow-300";
+      : "border-[#f4ff00]/25 bg-[#f4ff00]/10 text-[#f4ff00]";
 
   return <span className={`rounded-full border px-3 py-1 text-sm font-medium ${styles}`}>{children}</span>;
 }
