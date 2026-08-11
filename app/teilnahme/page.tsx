@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "../lib/supabase";
+import { getTeilnehmerSession, loadSharedData, saveRueckmeldung, startTeilnahme } from "../lib/goneo-api";
 import {
   Archive,
   Flame,
@@ -45,14 +45,6 @@ type Rueckmeldung = {
   rolle: "pa_traeger" | "maschinist" | "beide" | null;
 };
 
-type TeilnahmeSession = {
-  id: string;
-  vorname: string;
-  name: string;
-  ortswehr: string;
-};
-
-const SESSION_KEY = "teilnahme_session_v1";
 const ORTSWEHREN = ["Felm", "Rathmannsdorf-Felmerholz"] as const;
 
 export default function TeilnahmePage() {
@@ -115,52 +107,25 @@ export default function TeilnahmePage() {
   };
 
   const ladeDaten = async () => {
-    const [termineRes, rueckRes, profileRes, teilnehmerRes] = await Promise.all([
-      supabase
-        .from("termine")
-        .select("id, titel, datum, uhrzeit, hinweis")
-        .order("datum", { ascending: true }),
-      supabase
-        .from("rueckmeldungen")
-        .select(
-          "termin_id, profile_id, teilnehmer_id, teilnehmer_vorname, teilnehmer_name, teilnehmer_ortswehr, status, rolle"
-        ),
-      supabase.from("profiles").select("id, vorname, name, ortswehr"),
-      supabase.from("teilnehmer").select("id, vorname, name, ortswehr"),
-    ]);
-
-    if (termineRes.error) {
-      setFehler("Termine konnten nicht geladen werden: " + termineRes.error.message);
-      return;
-    }
-
-    if (rueckRes.error) {
-      setFehler("Rückmeldungen konnten nicht geladen werden: " + rueckRes.error.message);
-      return;
-    }
-
-    if (!profileRes.error) setProfile((profileRes.data as Profil[]) || []);
-    if (!teilnehmerRes.error) setAlleTeilnehmer((teilnehmerRes.data as Teilnehmer[]) || []);
-
-    setTermine((termineRes.data as Termin[]) || []);
-    setRueckmeldungen((rueckRes.data as Rueckmeldung[]) || []);
+    try {
+      const data = await loadSharedData();
+      setProfile(data.profiles as Profil[]);
+      setAlleTeilnehmer(data.teilnehmer as Teilnehmer[]);
+      setTermine(data.termine as Termin[]);
+      setRueckmeldungen(data.rueckmeldungen as Rueckmeldung[]);
+    } catch (error) { setFehler("Daten konnten nicht geladen werden: " + (error instanceof Error ? error.message : "Unbekannter Fehler")); }
   };
 
   useEffect(() => {
     const init = async () => {
-      const raw = localStorage.getItem(SESSION_KEY);
-      if (raw) {
-        try {
-          const parsed = JSON.parse(raw) as TeilnahmeSession;
+      const parsed = getTeilnehmerSession();
+      if (parsed) {
           if (parsed.id && parsed.name && parsed.vorname && parsed.ortswehr) {
             setTeilnehmer(parsed);
             setVorname(parsed.vorname);
             setName(parsed.name);
             setOrtswehr(parsed.ortswehr);
           }
-        } catch {
-          localStorage.removeItem(SESSION_KEY);
-        }
       }
 
       await ladeDaten();
@@ -218,22 +183,10 @@ export default function TeilnahmePage() {
         ? ("maschinist" as const)
         : null;
 
-    const { error } = await supabase.from("rueckmeldungen").upsert(
-      {
-        termin_id: terminId,
-        profile_id: null,
-        teilnehmer_id: teilnehmer.id,
-        teilnehmer_vorname: teilnehmer.vorname,
-        teilnehmer_name: teilnehmer.name,
-        teilnehmer_ortswehr: teilnehmer.ortswehr,
-        status: meine.status,
-        rolle: nextRolle,
-      },
-      { onConflict: "termin_id,teilnehmer_id" }
-    );
-
-    if (error) {
-      setFehler("Fehler beim Speichern: " + error.message);
+    try {
+      await saveRueckmeldung(getTeilnehmerSession()?.token || "", { termin_id: terminId, profile_id: null, teilnehmer_id: teilnehmer.id, status: meine.status, rolle: nextRolle });
+    } catch (error) {
+      setFehler("Fehler beim Speichern: " + (error instanceof Error ? error.message : "Unbekannter Fehler"));
       return;
     }
 
@@ -265,26 +218,14 @@ export default function TeilnahmePage() {
     setFehler("");
     setSpeichern(true);
 
-    const { error } = await supabase.from("rueckmeldungen").upsert(
-      {
-        termin_id: terminId,
-        profile_id: null,
-        teilnehmer_id: teilnehmer.id,
-        teilnehmer_vorname: teilnehmer.vorname,
-        teilnehmer_name: teilnehmer.name,
-        teilnehmer_ortswehr: teilnehmer.ortswehr,
-        status,
-        rolle,
-      },
-      { onConflict: "termin_id,teilnehmer_id" }
-    );
-
-    setSpeichern(false);
-
-    if (error) {
-      setFehler("Fehler beim Speichern: " + error.message);
+    try {
+      await saveRueckmeldung(getTeilnehmerSession()?.token || "", { termin_id: terminId, profile_id: null, teilnehmer_id: teilnehmer.id, status, rolle });
+    } catch (error) {
+      setSpeichern(false);
+      setFehler("Fehler beim Speichern: " + (error instanceof Error ? error.message : "Unbekannter Fehler"));
       return;
     }
+    setSpeichern(false);
 
     setRueckmeldungen((prev) => {
       const ohneMich = prev.filter(
@@ -321,82 +262,14 @@ export default function TeilnahmePage() {
     setFehler("");
     setEintrittLaden(true);
 
-    const verifyRes = await fetch("/api/teilnahme/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: c }),
-    });
-
-    const verifyBody = (await verifyRes.json()) as { ok: boolean; error?: string };
-    if (!verifyRes.ok || !verifyBody.ok) {
+    let person;
+    try { person = await startTeilnahme(v, n, o, c); }
+    catch (error) {
       setEintrittLaden(false);
-      setFehler(verifyBody.error || "Code ist ungültig.");
+      setFehler(error instanceof Error ? error.message : "Teilnahme konnte nicht gestartet werden.");
       return;
     }
 
-    const findExistingTeilnehmer = async () => {
-      const { data } = await supabase
-        .from("teilnehmer")
-        .select("id, vorname, name, ortswehr")
-        .ilike("vorname", v)
-        .ilike("name", n)
-        .ilike("ortswehr", o)
-        .maybeSingle();
-
-      return (data as Teilnehmer | null) || null;
-    };
-
-    const existing = await findExistingTeilnehmer();
-
-    let person = existing as Teilnehmer | null;
-
-    if (!person) {
-      const { data: created, error: createError } = await supabase
-        .from("teilnehmer")
-        .insert({
-          vorname: v,
-          name: n,
-          ortswehr: o,
-        })
-        .select("id, vorname, name, ortswehr")
-        .single();
-
-      if (createError) {
-        if ((createError as { code?: string }).code === "23505") {
-          person = await findExistingTeilnehmer();
-        } else {
-          setEintrittLaden(false);
-          setFehler("Teilnahme konnte nicht gestartet werden: " + createError.message);
-          return;
-        }
-      }
-
-      if (!person && !created) {
-        setEintrittLaden(false);
-        setFehler("Teilnahme konnte nicht gestartet werden.");
-        return;
-      }
-
-      if (!person) {
-        person = created as Teilnehmer;
-        setAlleTeilnehmer((prev) => [...prev, person as Teilnehmer]);
-      }
-    }
-
-    if (!person) {
-      setEintrittLaden(false);
-      setFehler("Teilnahme konnte nicht gestartet werden.");
-      return;
-    }
-
-    const session: TeilnahmeSession = {
-      id: person.id,
-      vorname: person.vorname,
-      name: person.name,
-      ortswehr: person.ortswehr,
-    };
-
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     setTeilnehmer(person);
     setCode("");
     setEintrittLaden(false);

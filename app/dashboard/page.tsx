@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "../lib/supabase";
+import { getAdminSession, getTeilnehmerSession, loadSharedData as loadGoneoData, logoutAdmin, logoutTeilnehmer, saveRueckmeldung } from "../lib/goneo-api";
 import {
   Archive,
   Flame,
@@ -47,15 +47,6 @@ type Rueckmeldung = {
   rolle: "pa_traeger" | "maschinist" | "beide" | null;
 };
 
-type TeilnahmeSession = {
-  id: string;
-  vorname: string;
-  name: string;
-  ortswehr: string;
-};
-
-const SESSION_KEY = "teilnahme_session_v1";
-
 export default function Dashboard() {
   const [mode, setMode] = useState<"auth" | "teilnehmer" | null>(null);
   const [userEmail, setUserEmail] = useState("");
@@ -93,67 +84,33 @@ export default function Dashboard() {
   };
 
   const loadSharedData = async () => {
-    const [profileListe, termineData, rueckData, teilnehmerData] = await Promise.all([
-      supabase.from("profiles").select("id, vorname, name, ortswehr"),
-      supabase
-        .from("termine")
-        .select("id, titel, datum, uhrzeit, hinweis")
-        .order("datum", { ascending: true }),
-      supabase
-        .from("rueckmeldungen")
-        .select(
-          "termin_id, profile_id, teilnehmer_id, teilnehmer_vorname, teilnehmer_name, teilnehmer_ortswehr, status, rolle"
-        ),
-      supabase.from("teilnehmer").select("id, vorname, name, ortswehr"),
-    ]);
-
-    if (profileListe.error) throw new Error(profileListe.error.message);
-    if (termineData.error) throw new Error(termineData.error.message);
-    if (rueckData.error) throw new Error(rueckData.error.message);
-
-    setAlleProfile((profileListe.data as Profile[]) || []);
-    setTermine((termineData.data as Termin[]) || []);
-    setRueckmeldungen((rueckData.data as Rueckmeldung[]) || []);
-    setAlleTeilnehmer((teilnehmerData.data as Teilnehmer[]) || []);
+    const data = await loadGoneoData();
+    setAlleProfile(data.profiles as Profile[]);
+    setTermine(data.termine as Termin[]);
+    setRueckmeldungen(data.rueckmeldungen as Rueckmeldung[]);
+    setAlleTeilnehmer(data.teilnehmer as Teilnehmer[]);
   };
 
   useEffect(() => {
     const init = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (user) {
+        const adminSession = getAdminSession();
+        if (adminSession) {
           setMode("auth");
-          setUserEmail(user.email || "");
-
-          const { data: meinProfil, error: meinProfilError } = await supabase
-            .from("profiles")
-            .select("id, vorname, name, ortswehr")
-            .eq("id", user.id)
-            .single();
-
-          if (meinProfilError || !meinProfil) {
-            throw new Error("Profil konnte nicht geladen werden.");
-          }
-
-          setProfile(meinProfil as Profile);
+          setUserEmail(adminSession.user.email || "");
+          setProfile(adminSession.profile as Profile);
           await loadSharedData();
           setLoading(false);
           return;
         }
 
-        const raw = localStorage.getItem(SESSION_KEY);
-        if (raw) {
-          const session = JSON.parse(raw) as TeilnahmeSession;
-          if (session?.id) {
+        const session = getTeilnehmerSession();
+        if (session?.id) {
             setMode("teilnehmer");
             setTeilnehmerSession(session);
             await loadSharedData();
             setLoading(false);
             return;
-          }
         }
 
         window.location.href = "/teilnahme";
@@ -193,14 +150,11 @@ export default function Dashboard() {
       rolle,
     };
 
-    const { error } = await supabase
-      .from("rueckmeldungen")
-      .upsert(payload, {
-        onConflict: actor.profileId ? "termin_id,profile_id" : "termin_id,teilnehmer_id",
-      });
-
-    if (error) {
-      alert("Fehler beim Speichern: " + error.message);
+    const token = mode === "auth" ? getAdminSession()?.token : getTeilnehmerSession()?.token;
+    try {
+      await saveRueckmeldung(token || "", { termin_id: terminId, profile_id: actor.profileId, teilnehmer_id: actor.teilnehmerId, status, rolle });
+    } catch (error) {
+      alert("Fehler beim Speichern: " + (error instanceof Error ? error.message : "Unbekannter Fehler"));
       return;
     }
 
@@ -290,12 +244,12 @@ export default function Dashboard() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    logoutAdmin();
     window.location.href = "/login";
   };
 
   const handleTeilnehmerLogout = () => {
-    localStorage.removeItem(SESSION_KEY);
+    logoutTeilnehmer();
     window.location.href = "/teilnahme";
   };
 

@@ -1,0 +1,10 @@
+import { readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+const root = resolve(import.meta.dirname, "..");
+const values = Object.fromEntries(readFileSync(resolve(root, ".env.goneo.local"), "utf8").split(/\r?\n/).filter((l) => l && !l.trimStart().startsWith("#") && l.includes("=")).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)]));
+const required = ["GONEO_DB_HOST","GONEO_DB_PORT","GONEO_DB_NAME","GONEO_DB_USER","GONEO_DB_PASSWORD","GONEO_TEILNAHME_ACCESS_CODE","GONEO_API_ADMIN_SECRET","GONEO_API_SESSION_SECRET"];
+for (const key of required) if (!values[key]) throw new Error(`Fehlender Wert: ${key}`);
+const q = (v) => `'${String(v).replaceAll("\\", "\\\\").replaceAll("'", "\\'")}'`;
+const output = `<?php\nreturn [\n  'db_host' => ${q(values.GONEO_DB_HOST)}, 'db_port' => ${Number(values.GONEO_DB_PORT)},\n  'db_name' => ${q(values.GONEO_DB_NAME)}, 'db_user' => ${q(values.GONEO_DB_USER)}, 'db_password' => ${q(values.GONEO_DB_PASSWORD)},\n  'teilnahme_access_code' => ${q(values.GONEO_TEILNAHME_ACCESS_CODE)}, 'session_secret' => ${q(values.GONEO_API_SESSION_SECRET)}, 'admin_secret' => ${q(values.GONEO_API_ADMIN_SECRET)},\n  'allowed_origins' => ['https://termine.feuerwehrfelm.de', 'http://localhost:3000'],\n];\n`;
+writeFileSync(resolve(root, "goneo-api/config.local.php"), output, { mode: 0o600 });
+console.log("goneo-api/config.local.php wurde erzeugt.");

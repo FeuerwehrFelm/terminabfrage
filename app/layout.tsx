@@ -1,11 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import PwaRegister from "./pwa-register";
-
-const inter = Inter({
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Gemeindefeuerwehr Felm",
@@ -33,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body className={inter.className}>
+      <body>
         <PwaRegister />
         {children}
       </body>

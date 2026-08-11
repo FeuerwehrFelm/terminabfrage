@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+import { getAdminSession, updateProfile } from "../lib/goneo-api";
 import { ArrowLeft, MapPin, Save, User } from "lucide-react";
 
 type Profile = {
@@ -24,28 +24,12 @@ export default function ProfilPage() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
+      const session = getAdminSession();
+      if (!session) {
         window.location.href = "/login";
         return;
       }
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, vorname, name, ortswehr")
-        .eq("id", user.id)
-        .single();
-
-      if (error || !data) {
-        alert("Profil konnte nicht geladen werden.");
-        setLoading(false);
-        return;
-      }
-
-      const p = data as Profile;
+      const p = session.profile as Profile;
 
       setProfileId(p.id);
       setVorname(p.vorname || "");
@@ -63,22 +47,18 @@ export default function ProfilPage() {
 
     setSaving(true);
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
+    try {
+      await updateProfile(getAdminSession()?.token || "", {
         vorname: vorname.trim(),
         name: name.trim(),
         ortswehr: ortswehr.trim(),
-      })
-      .eq("id", profileId);
-
-    setSaving(false);
-
-    if (error) {
-      alert("Fehler beim Speichern: " + error.message);
+      });
+    } catch (error) {
+      alert("Fehler beim Speichern: " + (error instanceof Error ? error.message : "Unbekannter Fehler"));
+      setSaving(false);
       return;
     }
-
+    setSaving(false);
     alert("Profil gespeichert.");
   };
 

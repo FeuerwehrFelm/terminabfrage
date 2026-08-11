@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabase";
+import { createTermin, deleteTermin, getAdminSession, loadSharedData } from "../../lib/goneo-api";
 import { CalendarDays, FileText, ShieldCheck, Trash2 } from "lucide-react";
 
 type Profile = {
@@ -45,30 +45,13 @@ export default function AdminTerminePage() {
   };
 
   const loadTermine = async () => {
-    const { data, error } = await supabase
-      .from("termine")
-      .select("id, titel, datum, uhrzeit, hinweis")
-      .order("datum", { ascending: true });
-
-    if (error) {
-      alert("Termine konnten nicht geladen werden: " + error.message);
-      return;
-    }
-
-    setTermine((data as Termin[]) || []);
+    const data = await loadSharedData();
+    setTermine(data.termine as Termin[]);
   };
 
   const loadRueckmeldungsStats = async () => {
-    const { data, error } = await supabase
-      .from("rueckmeldungen")
-      .select("termin_id, status");
-
-    if (error) {
-      alert("Rückmeldungen konnten nicht geladen werden: " + error.message);
-      return;
-    }
-
-    const rows = (data as Rueckmeldung[]) || [];
+    const data = await loadSharedData();
+    const rows = data.rueckmeldungen as Rueckmeldung[];
     const map: Record<string, { ja: number; nein: number; unsicher: number }> = {};
 
     rows.forEach((r) => {
@@ -86,33 +69,19 @@ export default function AdminTerminePage() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
+      const session = getAdminSession();
+      if (!session) {
         window.location.href = "/login";
         return;
       }
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, name, role")
-        .eq("id", user.id)
-        .single();
-
-      if (error || !data) {
-        window.location.href = "/dashboard";
-        return;
-      }
-
-      if (data.role !== "admin") {
+      if (session.profile.role !== "admin") {
         alert("Kein Zugriff. Nur Admin darf Termine anlegen.");
         window.location.href = "/dashboard";
         return;
       }
 
-      setProfile(data);
+      setProfile(session.profile as Profile);
       await loadTermine();
       await loadRueckmeldungsStats();
       setLoading(false);
@@ -129,16 +98,10 @@ export default function AdminTerminePage() {
 
     if (!profile) return;
 
-    const { error } = await supabase.from("termine").insert({
-      titel: titel.trim(),
-      datum,
-      uhrzeit: uhrzeit || null,
-      hinweis: hinweis || null,
-      created_by: profile.id,
-    });
-
-    if (error) {
-      alert("Fehler beim Speichern: " + error.message);
+    try {
+      await createTermin(getAdminSession()?.token || "", { titel: titel.trim(), datum, uhrzeit: uhrzeit || null, hinweis: hinweis || null });
+    } catch (error) {
+      alert("Fehler beim Speichern: " + (error instanceof Error ? error.message : "Unbekannter Fehler"));
       return;
     }
 
@@ -159,25 +122,14 @@ export default function AdminTerminePage() {
 
     setDeletingId(termin.id);
 
-    const { error: rueckError } = await supabase
-      .from("rueckmeldungen")
-      .delete()
-      .eq("termin_id", termin.id);
-
-    if (rueckError) {
+    try {
+      await deleteTermin(getAdminSession()?.token || "", termin.id);
+    } catch (error) {
       setDeletingId(null);
-      alert("Fehler beim Löschen der Rückmeldungen: " + rueckError.message);
+      alert("Fehler beim Löschen: " + (error instanceof Error ? error.message : "Unbekannter Fehler"));
       return;
     }
-
-    const { error } = await supabase.from("termine").delete().eq("id", termin.id);
-
     setDeletingId(null);
-
-    if (error) {
-      alert("Fehler beim Löschen: " + error.message);
-      return;
-    }
 
     setTermine((prev) => prev.filter((t) => t.id !== termin.id));
     setStatsByTermin((prev) => {

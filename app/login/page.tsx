@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "../lib/supabase";
+import { login } from "../lib/goneo-api";
 import { Flame, LogIn, Mail, LockKeyhole } from "lucide-react";
 
 export default function LoginPage() {
@@ -14,13 +14,10 @@ export default function LoginPage() {
     setLoading(true);
     setErrorText("");
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setErrorText(error.message);
+    try {
+      await login(email, password);
+    } catch (error) {
+      setErrorText(error instanceof Error ? error.message : "Anmeldung fehlgeschlagen.");
       setLoading(false);
       return;
     }
