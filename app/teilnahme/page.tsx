@@ -46,6 +46,8 @@ type Rueckmeldung = {
 };
 
 const ORTSWEHREN = ["Felm", "Rathmannsdorf-Felmerholz"] as const;
+const terminHatFunktionswahl = (termin: Termin) =>
+  !(termin.datum === "2026-10-03" && termin.titel === "Weisswurst Frühstück von der Gemeindewehrführung");
 
 export default function TeilnahmePage() {
   const [loading, setLoading] = useState(true);
@@ -152,6 +154,8 @@ export default function TeilnahmePage() {
   };
 
   const rollenWert = (terminId: string) => {
+    const termin = termine.find((item) => item.id === terminId);
+    if (termin && !terminHatFunktionswahl(termin)) return null;
     const s = rollenState(terminId);
     if (s.pa_traeger && s.maschinist) return "beide" as const;
     if (s.pa_traeger) return "pa_traeger" as const;
@@ -431,7 +435,7 @@ export default function TeilnahmePage() {
                         </div>
                       </div>
 
-                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {terminHatFunktionswahl(t) && <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button
                           onClick={() => toggleRolle(t.id, "pa_traeger")}
                           className={`rounded-2xl border px-4 py-2 text-sm font-medium transition ${
@@ -458,7 +462,7 @@ export default function TeilnahmePage() {
                             Maschinist
                           </span>
                         </button>
-                      </div>
+                      </div>}
 
                       <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
                         <button
@@ -542,7 +546,7 @@ export default function TeilnahmePage() {
                                       {r.status}
                                     </Badge>
                                   </div>
-                                  <div className="mt-2 text-xs text-slate-300">
+                                  {terminHatFunktionswahl(t) && <div className="mt-2 text-xs text-slate-300">
                                     Funktion:{" "}
                                     {r.rolle === "beide"
                                       ? "PA-Träger + Maschinist"
@@ -551,7 +555,7 @@ export default function TeilnahmePage() {
                                       : r.rolle === "pa_traeger"
                                       ? "PA-Träger"
                                       : "keine"}
-                                  </div>
+                                  </div>}
                                 </div>
                               );
                             })

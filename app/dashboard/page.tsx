@@ -47,6 +47,9 @@ type Rueckmeldung = {
   rolle: "pa_traeger" | "maschinist" | "beide" | null;
 };
 
+const terminHatFunktionswahl = (termin: Termin) =>
+  !(termin.datum === "2026-10-03" && termin.titel === "Weisswurst Frühstück von der Gemeindewehrführung");
+
 export default function Dashboard() {
   const [mode, setMode] = useState<"auth" | "teilnehmer" | null>(null);
   const [userEmail, setUserEmail] = useState("");
@@ -197,6 +200,8 @@ export default function Dashboard() {
   };
 
   const rollenWert = (terminId: string) => {
+    const termin = termine.find((item) => item.id === terminId);
+    if (termin && !terminHatFunktionswahl(termin)) return null;
     const state = rollenState(terminId);
     if (state.pa_traeger && state.maschinist) return "beide" as const;
     if (state.pa_traeger) return "pa_traeger" as const;
@@ -378,7 +383,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  <div className="mb-5 flex flex-wrap gap-3">
+                  {terminHatFunktionswahl(t) && <div className="mb-5 flex flex-wrap gap-3">
                     <button
                       onClick={() => toggleRolle(t.id, "pa_traeger")}
                       className={`rounded-2xl border px-4 py-2 font-medium transition ${
@@ -405,7 +410,7 @@ export default function Dashboard() {
                         Maschinist
                       </span>
                     </button>
-                  </div>
+                  </div>}
 
                   <div className="mb-5 flex flex-wrap gap-3">
                     <button
@@ -497,7 +502,7 @@ export default function Dashboard() {
                                 </Badge>
                               </div>
 
-                              {r.rolle && (
+                              {terminHatFunktionswahl(t) && r.rolle && (
                                 <div className="mt-3">
                                   <span className="rounded-full border border-[#f4ff00]/20 bg-[#f4ff00]/10 px-2 py-1 text-xs font-medium text-[#f4ff00]">
                                     {r.rolle === "beide"

@@ -1,4 +1,4 @@
-const CACHE_NAME = "terminabfrage-v2";
+const CACHE_NAME = "terminabfrage-v3";
 const APP_SHELL = ["/", "/teilnahme/", "/login/", "/manifest.webmanifest", "/pwa-192x192.png", "/pwa-512x512.png", "/apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {

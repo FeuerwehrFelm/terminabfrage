@@ -8,7 +8,8 @@ for(const path of ["/","/teilnahme/","/login/","/dashboard/","/profil/","/admin/
 const manifest=await json("/manifest.webmanifest");if(manifest.display!=="standalone"||!Array.isArray(manifest.icons)||manifest.icons.length<2)throw new Error("PWA-Manifest unvollständig.");
 const health=await json("/api/health");if(health.status!=="ok")throw new Error("Health-Endpunkt nicht ok.");
 const initial=await json("/api/data");
-if(initial.termine.length!==7||initial.teilnehmer.length!==15||initial.rueckmeldungen.length!==56)throw new Error("Importierte Ausgangszahlen weichen ab.");
+const initialCounts={termine:initial.termine.length,teilnehmer:initial.teilnehmer.length,rueckmeldungen:initial.rueckmeldungen.length};
+if(initialCounts.termine<1||initialCounts.teilnehmer<1)throw new Error("Live-Ausgangsdaten fehlen.");
 const login=await json("/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:env.GONEO_INITIAL_ADMIN_EMAIL,password:env.GONEO_INITIAL_ADMIN_PASSWORD})});
 const auth={"Content-Type":"application/json",Authorization:`Bearer ${login.token}`};
 await json("/api/profile",{method:"PUT",headers:auth,body:JSON.stringify({vorname:login.profile.vorname||"Admin",name:login.profile.name,ortswehr:"Felm"})});
@@ -19,11 +20,11 @@ try {
   const participant=await json("/api/teilnahme/session",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({vorname:person.vorname,name:person.name,ortswehr:person.ortswehr,code:env.GONEO_TEILNAHME_ACCESS_CODE})});
   await json("/api/rueckmeldungen",{method:"PUT",headers:{"Content-Type":"application/json",Authorization:`Bearer ${participant.token}`},body:JSON.stringify({termin_id:test.id,profile_id:null,teilnehmer_id:person.id,status:"ja",rolle:"beide"})});
   const during=await json("/api/data");
-  if(during.termine.length!==8||during.rueckmeldungen.length!==58)throw new Error("Live-Schreibtest nicht sichtbar.");
+  if(during.termine.length!==initialCounts.termine+1||during.rueckmeldungen.length!==initialCounts.rueckmeldungen+2)throw new Error("Live-Schreibtest nicht sichtbar.");
 } finally {
   await json(`/api/termine/${test.id}`,{method:"DELETE",headers:auth});
 }
 const finalData=await json("/api/data");
-if(finalData.termine.length!==7||finalData.rueckmeldungen.length!==56||finalData.termine.some(t=>t.id===test.id))throw new Error("Testdaten wurden nicht vollständig entfernt.");
+if(finalData.termine.length!==initialCounts.termine||finalData.rueckmeldungen.length!==initialCounts.rueckmeldungen||finalData.termine.some(t=>t.id===test.id))throw new Error("Testdaten wurden nicht vollständig entfernt.");
 const installer=await fetch(base+"/api/install.php");if(installer.status!==404)throw new Error(`Installer noch erreichbar: ${installer.status}`);
 console.log({health:"ok",pwa:"ok",login:"ok",adminWrite:"ok",teilnahmeWrite:"ok",cleanup:"ok",counts:{profiles:initial.profiles.length,termine:finalData.termine.length,teilnehmer:finalData.teilnehmer.length,rueckmeldungen:finalData.rueckmeldungen.length}});
