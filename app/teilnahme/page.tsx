@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getTeilnehmerSession, loadSharedData, saveRueckmeldung, startTeilnahme } from "../lib/goneo-api";
+import { ApiError, getTeilnehmerSession, loadSharedData, logoutTeilnehmer, saveRueckmeldung, startTeilnahme } from "../lib/goneo-api";
 import {
   Archive,
   Flame,
@@ -190,6 +190,12 @@ export default function TeilnahmePage() {
     try {
       await saveRueckmeldung(getTeilnehmerSession()?.token || "", { termin_id: terminId, profile_id: null, teilnehmer_id: teilnehmer.id, status: meine.status, rolle: nextRolle });
     } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        logoutTeilnehmer();
+        setTeilnehmer(null);
+        setFehler("Deine Sitzung ist abgelaufen. Bitte gib deine Daten und den Teilnahme-Code erneut ein.");
+        return;
+      }
       setFehler("Fehler beim Speichern: " + (error instanceof Error ? error.message : "Unbekannter Fehler"));
       return;
     }
@@ -226,6 +232,12 @@ export default function TeilnahmePage() {
       await saveRueckmeldung(getTeilnehmerSession()?.token || "", { termin_id: terminId, profile_id: null, teilnehmer_id: teilnehmer.id, status, rolle });
     } catch (error) {
       setSpeichern(false);
+      if (error instanceof ApiError && error.status === 401) {
+        logoutTeilnehmer();
+        setTeilnehmer(null);
+        setFehler("Deine Sitzung ist abgelaufen. Bitte gib deine Daten und den Teilnahme-Code erneut ein.");
+        return;
+      }
       setFehler("Fehler beim Speichern: " + (error instanceof Error ? error.message : "Unbekannter Fehler"));
       return;
     }

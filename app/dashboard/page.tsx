@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getAdminSession, getTeilnehmerSession, loadSharedData as loadGoneoData, logoutAdmin, logoutTeilnehmer, saveRueckmeldung } from "../lib/goneo-api";
+import { ApiError, getAdminSession, getTeilnehmerSession, loadSharedData as loadGoneoData, logoutAdmin, logoutTeilnehmer, saveRueckmeldung } from "../lib/goneo-api";
 import {
   Archive,
   Flame,
@@ -157,6 +157,13 @@ export default function Dashboard() {
     try {
       await saveRueckmeldung(token || "", { termin_id: terminId, profile_id: actor.profileId, teilnehmer_id: actor.teilnehmerId, status, rolle });
     } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        if (mode === "auth") logoutAdmin();
+        else logoutTeilnehmer();
+        alert("Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.");
+        window.location.assign(mode === "auth" ? "/login" : "/teilnahme");
+        return;
+      }
       alert("Fehler beim Speichern: " + (error instanceof Error ? error.message : "Unbekannter Fehler"));
       return;
     }
