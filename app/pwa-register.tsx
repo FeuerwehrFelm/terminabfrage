@@ -6,9 +6,12 @@ export default function PwaRegister() {
   useEffect(() => {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
 
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      // no-op: app should keep working even if SW registration fails
-    });
+    navigator.serviceWorker
+      .register("/sw.js", { updateViaCache: "none" })
+      .then((registration) => registration.update())
+      .catch(() => {
+        // no-op: app should keep working even if SW registration fails
+      });
   }, []);
 
   return null;

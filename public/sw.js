@@ -1,4 +1,4 @@
-const CACHE_NAME = "terminabfrage-v3";
+const CACHE_NAME = "terminabfrage-v4";
 const APP_SHELL = ["/", "/teilnahme/", "/login/", "/manifest.webmanifest", "/pwa-192x192.png", "/pwa-512x512.png", "/apple-touch-icon.png"];
 
 self.addEventListener("install", (event) => {
@@ -15,7 +15,18 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (event.request.method !== "GET" || url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
   if (event.request.mode === "navigate") {
-    event.respondWith(fetch(event.request).then((response) => { const copy=response.clone(); void caches.open(CACHE_NAME).then((cache)=>cache.put(event.request,copy)); return response; }).catch(()=>caches.match(event.request).then((cached)=>cached||caches.match("/"))));
+    event.respondWith(
+      Promise.race([
+        fetch(event.request),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Netzwerk-Timeout")), 8000)),
+      ])
+        .then((response) => {
+          const copy = response.clone();
+          void caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match("/"))),
+    );
     return;
   }
   event.respondWith(caches.match(event.request).then((cached)=>cached||fetch(event.request).then((response)=>{const copy=response.clone();void caches.open(CACHE_NAME).then((cache)=>cache.put(event.request,copy));return response;})));

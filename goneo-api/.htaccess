@@ -5,6 +5,9 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ index.php [QSA,L]
 Options -Indexes
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE application/json text/plain
+</IfModule>
 <FilesMatch "^(config\..*\.php|schema\.sql|migration-data\.json)$">
   Require all denied
 </FilesMatch>
